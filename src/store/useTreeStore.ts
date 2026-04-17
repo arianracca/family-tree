@@ -56,6 +56,8 @@ interface TreeState {
 
   // Acciones — utilidades
   centerOnNode: (nodeId: string) => void;
+  updateNodeData: (nodeId: string, data: Partial<Record<string, unknown>>) => void;
+
 }
 
 // ─── Valores por defecto ──────────────────────────────────────────────────────
@@ -135,6 +137,13 @@ export const useTreeStore = create<TreeState>()(
       }),
 
     // ── Utilidades ───────────────────────────────────────────────────────────
+
+    updateNodeData: (nodeId, data) =>
+  set((state) => {
+    const node = state.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    node.data = { ...node.data, ...data };
+  }),
 
     centerOnNode: (nodeId) => {
       const node = get().nodes.find((n) => n.id === nodeId);

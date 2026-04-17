@@ -116,6 +116,14 @@ function PersonNode({ data, selected }: Props) {
           overflow: hidden;
         }
 
+        .person-node__photo {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+          object-position: center top;
+        }
+
         /* Línea de acento izquierda */
         .person-node::before {
           content: '';

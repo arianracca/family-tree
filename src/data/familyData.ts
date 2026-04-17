@@ -44,7 +44,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: true,
       generation: 100001,
-      photoUrl: null,
+      photoUrl: "/persons/p4_Arian_Racca/00.Avatar.jpg",
     },
     {
       id: "p5",

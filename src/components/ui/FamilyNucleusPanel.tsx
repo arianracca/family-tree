@@ -1,5 +1,6 @@
 "use client";
 
+import AvatarUpload from "@/components/ui/AvatarUpload";
 import { useCallback } from "react";
 import { useTreeStore } from "@/store/useTreeStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
@@ -171,6 +172,16 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
 
       <div className="nucleus-panel__divider" />
 
+      {/* § 4.5.0 — Avatar upload */}
+      <div className="nucleus-panel__avatar-section">
+        <AvatarUpload
+          personId={person.id}
+          nombre={person.nombre}
+          apellidoPaterno={person.apellidoPaterno}
+          currentPhotoUrl={person.photoUrl}
+        />
+      </div>
+
       {/* ── Body ── */}
       <div className="nucleus-panel__body">
 
@@ -310,6 +321,13 @@ const panelStyles = `
     background: linear-gradient(90deg, transparent, #c9a84c44 30%, #c9a84c44 70%, transparent);
     flex-shrink: 0;
     margin: 0 20px;
+  }
+
+  .nucleus-panel__avatar-section {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 4px;
+    flex-shrink: 0;
   }
 
   /* ── Body ── */
