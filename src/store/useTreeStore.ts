@@ -57,6 +57,8 @@ interface TreeState {
   // Acciones — utilidades
   centerOnNode: (nodeId: string) => void;
   updateNodeData: (nodeId: string, data: Partial<Record<string, unknown>>) => void;
+  setNodes: (nodes: AppNode[]) => void;
+
 
 }
 
@@ -138,12 +140,17 @@ export const useTreeStore = create<TreeState>()(
 
     // ── Utilidades ───────────────────────────────────────────────────────────
 
+    setNodes: (nodes) =>
+      set((state) => {
+        state.nodes = nodes as typeof state.nodes;
+      }),
+
     updateNodeData: (nodeId, data) =>
-  set((state) => {
-    const node = state.nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-    node.data = { ...node.data, ...data };
-  }),
+      set((state) => {
+        const node = state.nodes.find((n) => n.id === nodeId);
+        if (!node) return;
+        node.data = { ...node.data, ...data };
+      }),
 
     centerOnNode: (nodeId) => {
       const node = get().nodes.find((n) => n.id === nodeId);

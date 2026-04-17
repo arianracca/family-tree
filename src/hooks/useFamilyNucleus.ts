@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore } from "@/store/useTreeStore";
 import { computeFamilyNucleus } from "@/lib/familyNucleus";
@@ -9,29 +9,20 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
   const setHighlight   = useTreeStore((state) => state.setHighlight);
   const clearHighlight = useTreeStore((state) => state.clearHighlight);
 
-  const nucleus = useMemo(() => {
-    if (!personId) {
-      clearHighlight();
-      return null;
-    }
+  // ── Calcular núcleo (solo lectura, sin side effects) ──────────────────────
+  const { nucleus, highlight } = useMemo(() => {
+    if (!personId) return { nucleus: null, highlight: null };
 
     const result = computeFamilyNucleus(personId, familyData);
-
-    if (!result) {
-      clearHighlight();
-      return null;
-    }
+    if (!result) return { nucleus: null, highlight: null };
 
     const nodeIds = new Set<string>();
     const edgeIds = new Set<string>();
 
-    // ── Todos los padres (A + B) ──────────────────────────────────────────────
     const allParentIds = [...result.parentIdsA, ...result.parentIdsB];
-
     allParentIds.forEach((id) => nodeIds.add(id));
     result.childrenIds.forEach((id) => nodeIds.add(id));
 
-    // ── Pareja central ────────────────────────────────────────────────────────
     if (result.coupleIds) {
       const [idA, idB] = result.coupleIds;
       nodeIds.add(idA);
@@ -44,7 +35,6 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
 
     const couples = familyData.relations.filter((r) => r.type === "couple");
 
-    // ── CoupleNodes de los padres ─────────────────────────────────────────────
     for (const parentId of allParentIds) {
       const parentCouple = couples.find(
         (c) => c.type === "couple" && c.persons.includes(parentId)
@@ -57,7 +47,6 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
       }
     }
 
-    // ── CoupleNodes de los hijos ──────────────────────────────────────────────
     for (const childId of result.childrenIds) {
       const childCouple = couples.find(
         (c) => c.type === "couple" && c.persons.includes(childId)
@@ -70,17 +59,14 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
       }
     }
 
-    // ── Edges parent-child relevantes ─────────────────────────────────────────
     familyData.relations
       .filter((r) => r.type === "parent-child")
       .forEach((r) => {
         if (r.type !== "parent-child") return;
-
         const fromInNucleus =
           nodeIds.has(r.from) ||
           allParentIds.includes(r.from) ||
           (result.coupleIds?.includes(r.from) ?? false);
-
         const toInNucleus =
           nodeIds.has(r.to) ||
           result.childrenIds.includes(r.to) ||
@@ -99,15 +85,21 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
           const targetId = childCouple
             ? `couple-${childCouple.persons[0]}-${childCouple.persons[1]}`
             : r.to;
-
           edgeIds.add(`edge-${sourceId}→${targetId}`);
         }
       });
 
-    setHighlight({ nodeIds, edgeIds });
+    return { nucleus: result, highlight: { nodeIds, edgeIds } };
+  }, [personId, familyData]);
 
-    return result;
-  }, [personId, familyData, setHighlight, clearHighlight]);
+  // ── Side effect separado del cálculo ──────────────────────────────────────
+  useEffect(() => {
+    if (highlight) {
+      setHighlight(highlight);
+    } else {
+      clearHighlight();
+    }
+  }, [highlight, setHighlight, clearHighlight]);
 
   return nucleus;
 }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore } from "@/store/useTreeStore";
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // § 1. TIPOS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,8 +30,14 @@ export default function AvatarUpload({
 }: Props) {
   const inputRef              = useRef<HTMLInputElement>(null);
   const [status, setStatus]   = useState<UploadStatus>("idle");
-  const [preview, setPreview] = useState<string | null>(currentPhotoUrl ?? null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(currentPhotoUrl ?? null);
+
+  // Sincronizar preview con el currentPhotoUrl del store — útil si se actualiza
+  useEffect(() => {
+    setPreview(currentPhotoUrl ?? null);
+  }, [personId, currentPhotoUrl]);
+
 
   // ── § 2.1 Hooks — todos en el cuerpo del componente ──────────────────────
 

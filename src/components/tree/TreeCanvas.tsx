@@ -6,8 +6,10 @@ import {
   Background,
   BackgroundVariant,
   useReactFlow,
+  applyNodeChanges,
   type NodeMouseHandler,
   type OnMove,
+  type OnNodesChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import PersonNode from "./nodes/PersonNode";
@@ -54,6 +56,8 @@ function TreeCanvasInner() {
   const layoutStatus = useTreeStore((s) => s.layoutStatus);
   const isReady      = useTreeStore(selectIsLayoutReady());
   const setViewport  = useTreeStore((s) => s.setViewport);
+  const setNodes = useTreeStore((s) => s.setNodes);
+
 
   // ── Store: selección ────────────────────────────────────────────────────────
 
@@ -102,6 +106,13 @@ function TreeCanvasInner() {
     [setViewport]
   );
 
+  const handleNodesChange: OnNodesChange<AppNode> = useCallback(
+  (changes) => {
+    setNodes(applyNodeChanges(changes, nodes) as AppNode[]);
+  },
+  [nodes, setNodes]
+);
+
   // ── Estados de UI ───────────────────────────────────────────────────────────
 
   if (layoutStatus === "error") {
@@ -135,6 +146,7 @@ function TreeCanvasInner() {
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onNodesChange={handleNodesChange}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
         onMove={handleMove}
