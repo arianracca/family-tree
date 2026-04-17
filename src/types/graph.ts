@@ -11,6 +11,8 @@ export interface PersonNodeData extends Record<string, unknown> {
   vivo: boolean;
   generation: number;
   isHighlighted?: boolean;
+  photoUrl?: string | null; 
+
 }
 
 // Data que lleva un CoupleNode (compound: contiene dos personas)

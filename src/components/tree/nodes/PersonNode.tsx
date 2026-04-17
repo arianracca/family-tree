@@ -64,10 +64,20 @@ function PersonNode({ data, selected }: Props) {
         data-dimmed={isDimmed}
         className="person-node"
       >
-        {/* Avatar con iniciales */}
+        {/* Avatar con iniciales o foto */}
         <div className="person-node__avatar">
-          <span className="person-node__initials">{initials}</span>
-          {!vivo && <span className="person-node__deceased-icon">†</span>}
+          {data.photoUrl ? (
+            <img
+              src={data.photoUrl}
+              alt={data.nombre}
+              className="person-node__photo"
+            />
+          ) : (
+            <span className="person-node__initials">{initials}</span>
+          )}
+          {!data.vivo && (
+            <span className="person-node__deceased-icon">†</span>
+          )}
         </div>
 
         {/* Info */}
@@ -121,6 +131,14 @@ function PersonNode({ data, selected }: Props) {
 
         .person-node[data-alive='true']::before  { background: #c9a84c; }
         .person-node[data-alive='false']::before { background: #555; }
+
+        .person-node__photo {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+          object-position: center top;
+        }
 
         /* Estados */
         .person-node:hover,

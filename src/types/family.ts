@@ -11,6 +11,8 @@ export interface Person {
   ciudad?: string | null;
   vivo: boolean;
   generation: number; // Ancla: 100000. Padres < 100000, hijos > 100000
+  photoUrl?: string | null;   // ← nuevo: URL, ruta /public, o base64
+
 }
 
 // ─── Relaciones ──────────────────────────────────────────────────────────────

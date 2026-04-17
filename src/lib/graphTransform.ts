@@ -98,6 +98,7 @@ export function transformToReactFlow(
         apellidoMaterno: person.apellidoMaterno,
         vivo: person.vivo,
         generation: person.generation,
+        photoUrl: person.photoUrl,
       };
 
       nodes.push({
