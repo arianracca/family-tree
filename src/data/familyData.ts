@@ -13,7 +13,7 @@ export const FAMILY_DATA: FamilyData = {
       ciudad: null,
       vivo: true,
       generation: 100000,
-      photoUrl: "/persons/p1_Helder_Racca/00.Avatar.webp",
+      photoUrl: null,
     },
     {
       id: "p2",
@@ -26,7 +26,7 @@ export const FAMILY_DATA: FamilyData = {
       ciudad: null,
       vivo: true,
       generation: 100000,
-      photoUrl: "/persons/p2_Nilde_Cambiaso/00.Avatar.jpg",
+      photoUrl: null,
     },
     {
       id: "p3",
@@ -44,7 +44,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: true,
       generation: 100001,
-      photoUrl: "/persons/p4_Arian_Racca/00.Avatar.jpg",
+      photoUrl: null,
     },
     {
       id: "p5",
@@ -53,7 +53,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: true,
       generation: 100001,
-      photoUrl: "/persons/p5_Arlene_Racca/00.Avatar.jpg",
+      photoUrl: null,
     },
     {
       id: "p6",
@@ -62,7 +62,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: "/persons/p6_Jose_Pablo_Cambiaso/00.Avatar.jpg",
+      photoUrl: null,
     },
     {
       id: "p7",
@@ -71,7 +71,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: "/persons/p7_Edith_Gladys_Soverchia/00.Avatar.jpg",
+      photoUrl: null,
     },
     {
       id: "p8",
@@ -80,7 +80,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: "/persons/p8_Francisco_Racca/00.Avatar.webp",
+      photoUrl: null,
     },
     {
       id: "p9",
@@ -89,7 +89,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: "/persons/p9_Cladi_Tentella/00.Avatar.webp",
+      photoUrl: null,
     },
     {
       id: "p10",
@@ -98,7 +98,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99998,
-      photoUrl: "/persons/p10_Armando_Tentella/00.Avatar.webp",
+      photoUrl: null,
     },
     {
       id: "p11",
@@ -107,7 +107,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99998,
-      photoUrl: "/persons/p11_Rosa_Domizi/00.Avatar.webp",
+      photoUrl: null,
     },
   ],
   relations: [
