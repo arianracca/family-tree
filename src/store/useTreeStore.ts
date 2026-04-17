@@ -146,11 +146,20 @@ export const useTreeStore = create<TreeState>()(
       }),
 
     updateNodeData: (nodeId, data) =>
-      set((state) => {
-        const node = state.nodes.find((n) => n.id === nodeId);
-        if (!node) return;
-        node.data = { ...node.data, ...data };
-      }),
+    set((state) => {
+      const index = state.nodes.findIndex((n) => n.id === nodeId);
+      if (index === -1) return;
+      // Nuevo objeto para el nodo y nuevo array — ReactFlow detecta el cambio
+      const updatedNode = {
+        ...state.nodes[index],
+        data: { ...state.nodes[index].data, ...data },
+      };
+      state.nodes = [
+        ...state.nodes.slice(0, index),
+        updatedNode,
+        ...state.nodes.slice(index + 1),
+      ] as typeof state.nodes;
+    }),
 
     centerOnNode: (nodeId) => {
       const node = get().nodes.find((n) => n.id === nodeId);

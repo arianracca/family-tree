@@ -104,13 +104,11 @@ export async function POST(req: NextRequest) {
     await updatePhotoUrlInSource(personId, publicUrl);
 
     // Al final del POST handler, en el return exitoso:
+    // Devolver al cliente con cache buster
+    const cacheBuster = Date.now();
     return NextResponse.json(
-    { photoUrl: publicUrl },
-    {
-        headers: {
-        "Cache-Control": "no-store",
-        },
-    }
+      { photoUrl: `${publicUrl}?v=${cacheBuster}` },
+      { headers: { "Cache-Control": "no-store" } }
     );
 
   } catch (err) {

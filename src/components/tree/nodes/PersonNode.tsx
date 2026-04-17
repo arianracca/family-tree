@@ -180,8 +180,8 @@ function PersonNode({ data, selected }: Props) {
         .person-node__avatar {
           position: relative;
           flex-shrink: 0;
-          width: 40px;
-          height: 40px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           background: #1a1a1a;
           border: 1px solid #2a2a2a;

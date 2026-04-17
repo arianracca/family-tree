@@ -80,17 +80,13 @@ export default function AvatarUpload({
         body: formData,
       });
       const json = await res.json();
-
       if (!res.ok) throw new Error(json.error ?? "Error desconocido");
 
       const photoUrl: string = json.photoUrl;
 
-      // Actualizar store en memoria — dispara re-render del panel
+      // Actualiza el store de familia — useElkLayout se encarga de
+      // propagar el cambio al nodo de ReactFlow sin recalcular ELK
       updatePerson(personId, { photoUrl });
-
-      // Actualizar el nodo de ReactFlow directamente — reflejo inmediato
-      // en el canvas sin esperar a que ELK recalcule todo
-      updateNodeData(personId, { photoUrl });
 
       setStatus("success");
       setTimeout(() => setStatus("idle"), 2000);

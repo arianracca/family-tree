@@ -1,53 +1,50 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { computeElkLayout } from "@/lib/elkLayout";
 import { transformToReactFlow } from "@/lib/graphTransform";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore } from "@/store/useTreeStore";
 import type { FamilyData } from "@/types/family";
 
-/*
-    Los puntos clave:
-    useElkLayout
-
-    Patrón abort con useRef: como computeElkLayout es async, puede pasar que familyData cambie mientras ELK todavía está calculando. El abortRef garantiza que el resultado desactualizado se descarte y no pise al resultado nuevo.
-    Sin Web Worker por ahora: la lógica está desacoplada para que en el futuro puedas mover computeElkLayout a un Worker sin tocar el hook. Solo cambiás la importación.
-    Suscripción granular: el hook se suscribe solo a familyData del store, no al store completo. Así solo se re-ejecuta cuando los datos cambian realmente.
-*/
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useElkLayout() {
-  const familyData = useFamilyStore((state) => state.familyData);
+  const familyData      = useFamilyStore((state) => state.familyData);
   const setLayoutResult = useTreeStore((state) => state.setLayoutResult);
   const setLayoutStatus = useTreeStore((state) => state.setLayoutStatus);
+  const updateNodeData  = useTreeStore((state) => state.updateNodeData);
 
-  // Ref para cancelar layouts desactualizados si familyData cambia
-  // mientras ELK todavía está calculando
   const abortRef = useRef<boolean>(false);
 
+  // ── Huella estructural: solo lo que ELK necesita para calcular posiciones ──
+  // photoUrl, vivo, nombres, etc. NO están acá.
+  // Este memo solo cambia cuando cambia la estructura del árbol (personas/relaciones).
+  const structuralKey = useMemo(() => {
+    const personStructure = familyData.persons.map((p) => `${p.id}:${p.generation}`).join("|");
+    const relationStructure = familyData.relations
+      .map((r) =>
+        r.type === "parent-child"
+          ? `pc:${r.from}-${r.to}`
+          : `cp:${r.persons[0]}-${r.persons[1]}`
+      )
+      .join("|");
+    return `${personStructure}__${relationStructure}`;
+  }, [familyData]);
+
+  // ── ELK solo se recalcula cuando cambia la estructura ────────────────────
   useEffect(() => {
-    // Marcar el cálculo anterior como cancelado
     abortRef.current = false;
 
     async function runLayout(data: FamilyData) {
       setLayoutStatus("loading");
-
       try {
         const elkOutput = await computeElkLayout(data);
-
-        // Si llegó un nuevo familyData mientras calculábamos, descartar
         if (abortRef.current) return;
 
         const result = transformToReactFlow(data, elkOutput);
-
         if (abortRef.current) return;
 
         setLayoutResult(result);
       } catch (err) {
         if (abortRef.current) return;
-
-        const message =
-          err instanceof Error ? err.message : "ELK layout failed";
+        const message = err instanceof Error ? err.message : "ELK layout failed";
         setLayoutStatus("error", message);
         console.error("[useElkLayout] Layout error:", err);
       }
@@ -55,9 +52,25 @@ export function useElkLayout() {
 
     runLayout(familyData);
 
-    // Cleanup: marcar como abortado si el efecto se re-ejecuta
     return () => {
       abortRef.current = true;
     };
-  }, [familyData, setLayoutResult, setLayoutStatus]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [structuralKey, setLayoutResult, setLayoutStatus]);
+  // ↑ structuralKey en lugar de familyData — ELK no recalcula por photoUrl
+
+  // ── Sincronizar datos de display cuando cambian sin cambio estructural ────
+  // Cuando photoUrl (u otro campo visual) cambia, solo actualizamos
+  // el data del nodo en ReactFlow directamente, sin pasar por ELK.
+  useEffect(() => {
+    for (const person of familyData.persons) {
+      updateNodeData(person.id, {
+        photoUrl:        person.photoUrl ?? null,
+        vivo:            person.vivo,
+        nombre:          person.nombre,
+        apellidoPaterno: person.apellidoPaterno,
+        apellidoMaterno: person.apellidoMaterno,
+      });
+    }
+  }, [familyData.persons, updateNodeData]);
 }
