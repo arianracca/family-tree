@@ -10,13 +10,18 @@ import {
   type OnMove,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-
 import PersonNode from "./nodes/PersonNode";
 import CoupleNode from "./nodes/CoupleNode";
 import { useElkLayout } from "@/hooks/useElkLayout";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore, selectIsLayoutReady } from "@/store/useTreeStore";
 import type { AppNode, AppEdge } from "@/types/graph";
+import CoupleEdge from "./edges/CoupleEdge";
+import type { EdgeTypes } from "@xyflow/react";
+
+const edgeTypes: EdgeTypes = {
+  couple: CoupleEdge,
+};
 
 /*
     Los puntos clave:
@@ -129,6 +134,7 @@ function TreeCanvasInner() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
         onMove={handleMove}

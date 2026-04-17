@@ -39,8 +39,11 @@ export interface FamilyData {
 // ─── Núcleo familiar (resultado de familyNucleus.ts) ────────────────────────
 
 export interface FamilyNucleus {
-  coupleIds: [string, string] | null; // la pareja central (puede ser persona sola)
-  parentIds: string[];                // padres de cada miembro de la pareja
-  childrenIds: string[];              // hijos de la pareja
-  personId: string;                   // persona desde la que se calculó el núcleo
+  personId: string;
+  coupleIds: [string, string] | null;
+  // ❌ antes: parentIds: string[]
+  // ✅ ahora: separados por miembro de la pareja
+  parentIdsA: string[];   // padres del primer miembro (o de la persona sola)
+  parentIdsB: string[];   // padres del segundo miembro (vacío si no hay pareja)
+  childrenIds: string[];
 }

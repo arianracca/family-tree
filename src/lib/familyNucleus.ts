@@ -52,21 +52,6 @@ function getChildrenOfCouple(
   return [...childrenOfA].filter((id) => childrenOfB.has(id));
 }
 
-function getParentsOfCouple(
-  personIds: [string, string],
-  familyData: FamilyData
-): string[] {
-  const [idA, idB] = personIds;
-
-  // Retornamos los padres de cada miembro de la pareja por separado
-  // (no es un AND como en hijos, cada uno tiene sus propios padres)
-  const parentsOfA = getParentsOf(idA, familyData);
-  const parentsOfB = getParentsOf(idB, familyData);
-
-  // Deduplicar por si comparten algún padre (caso raro pero posible)
-  return [...new Set([...parentsOfA, ...parentsOfB])];
-}
-
 // ─── Algoritmo principal ──────────────────────────────────────────────────────
 
 /**
@@ -90,31 +75,27 @@ export function computeFamilyNucleus(
 
   const couple = getCoupleForPerson(personId, couples);
 
-  // ── Caso 1: persona con pareja ────────────────────────────────────────────
 
+  // ── Caso 1: persona con pareja ────────────────────────────────────────────
   if (couple) {
-    const coupleIds = couple.persons;
-    const parentIds = getParentsOfCouple(coupleIds, familyData);
-    const childrenIds = getChildrenOfCouple(coupleIds, familyData);
+    const [idA, idB] = couple.persons;
 
     return {
       personId,
-      coupleIds,
-      parentIds,
-      childrenIds,
+      coupleIds: couple.persons,
+      parentIdsA: getParentsOf(idA, familyData),  // solo padres de A
+      parentIdsB: getParentsOf(idB, familyData),  // solo padres de B
+      childrenIds: getChildrenOfCouple(couple.persons, familyData),
     };
   }
 
   // ── Caso 2: persona sin pareja ────────────────────────────────────────────
-
-  const parentIds = getParentsOf(personId, familyData);
-  const childrenIds = getChildrenOf(personId, familyData);
-
   return {
     personId,
     coupleIds: null,
-    parentIds,
-    childrenIds,
+    parentIdsA: getParentsOf(personId, familyData),
+    parentIdsB: [],
+    childrenIds: getChildrenOf(personId, familyData),
   };
 }
 
@@ -139,7 +120,9 @@ export function getNucleusPersonIds(
     nucleus.coupleIds.forEach((id) => ids.add(id));
   }
 
-  nucleus.parentIds.forEach((id) => ids.add(id));
+  // parentIdsA = padres del miembro A, parentIdsB = padres del miembro B
+  nucleus.parentIdsA.forEach((id) => ids.add(id));
+  nucleus.parentIdsB.forEach((id) => ids.add(id));
   nucleus.childrenIds.forEach((id) => ids.add(id));
 
   return ids;

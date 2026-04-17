@@ -74,30 +74,18 @@ export async function computeElkLayout(
 
   const coupleElkNodes: ElkNode[] = couples.map((couple) => {
     const coupleId = getCoupleId(couple.persons);
-    const generation = persons.find((p) => p.id === couple.persons[0])!.generation;
 
-    const innerPersonNodes: ElkNode[] = couple.persons.map((personId) => ({
-      id: personId,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      layoutOptions: {
-        // Dentro del compound, los dos PersonNodes van en fila horizontal
-        "elk.direction": "RIGHT",
-      },
-    }));
+    // Dimensiones del compound calculadas a mano:
+    // dos PersonNodes en fila + padding + gap
+    const compoundWidth  = NODE_WIDTH * 2 + 16 + 12 * 2;  // 412
+    const compoundHeight = NODE_HEIGHT + 12 * 2;           // 104
 
     return {
       id: coupleId,
-      // ELK calcula el tamaño del compound en base a sus hijos
-      layoutOptions: {
-        "elk.algorithm": "layered",
-        "elk.direction": "DOWN",
-        // Hard constraint: este compound queda en la layer de su generación
-        "elk.layered.layering.strategy": "INTERACTIVE",
-      },
-      children: innerPersonNodes,
-      // El compound hereda la generation de sus miembros
-      // Lo usamos como metadato, ELK lo ignora
+      width: compoundWidth,
+      height: compoundHeight,
+      // Sin children — ELK lo trata como nodo atómico
+      // Las posiciones internas las calculamos en extractPositions
     };
   });
 
@@ -126,25 +114,27 @@ export async function computeElkLayout(
   const processedParentEdges = new Set<string>();
   const elkEdges: ElkExtendedEdge[] = [];
 
-  for (const rel of parentChildRelations) {
-    if (rel.type !== "parent-child") continue;
+    for (const rel of parentChildRelations) {
+  if (rel.type !== "parent-child") continue;
 
-    const parentCoupleId = findCoupleIdForPerson(rel.from, couples);
-    const childCoupleId  = findCoupleIdForPerson(rel.to,   couples);
+  // Source: CoupleNode del padre, o PersonNode solo
+  const parentCoupleId = findCoupleIdForPerson(rel.from, couples);
+  const sourceId = parentCoupleId ?? rel.from;
 
-    const sourceId = parentCoupleId ?? rel.from;
-    const targetId = childCoupleId  ?? rel.to;
+  // ✅ FIX: Target también debe ser CoupleNode del hijo, o PersonNode solo
+  const childCoupleId = findCoupleIdForPerson(rel.to, couples);
+  const targetId = childCoupleId ?? rel.to;
 
-    const edgeKey = `${sourceId}→${targetId}`;
-    if (processedParentEdges.has(edgeKey)) continue;
-    processedParentEdges.add(edgeKey);
+  const edgeKey = `${sourceId}→${targetId}`;
+  if (processedParentEdges.has(edgeKey)) continue;
+  processedParentEdges.add(edgeKey);
 
-    elkEdges.push({
-      id: `edge-${edgeKey}`,
-      sources: [sourceId],
-      targets: [targetId],
-    });
-  }
+  elkEdges.push({
+    id: `edge-${edgeKey}`,
+    sources: [sourceId],
+    targets: [targetId],
+  });
+}
 
   // ── 4. Layers por generación (hard constraint) ────────────────────────────
   //
@@ -155,61 +145,35 @@ export async function computeElkLayout(
   //
   // Alternativa más robusta: usamos "elk.layered.layering.layerConstraint"
   // con un índice calculado desde la generation.
+  // V2:
+  // Eliminamos layerConstraint completamente.
+  // ELK layered infiere los layers desde la dirección de los edges.
+  // Con elk.direction: DOWN y edges de ancestro → descendiente,
+  // ELK naturalmente pone ancestros arriba y descendientes abajo.
+  // No necesitamos map de generationToLayer.
 
-  const generations = [...new Set(persons.map((p) => p.generation))].sort(
-    (a, b) => a - b
-  );
-  const generationToLayer = new Map(
-    generations.map((gen, idx) => [gen, idx])
-  );
-
-  // Aplicar layerConstraint a cada nodo raíz
-  const allRootNodes: ElkNode[] = [
-    ...coupleElkNodes.map((n) => {
-      const firstPersonId = couples.find(
-        (c) => getCoupleId(c.persons) === n.id
-      )!.persons[0];
-      const gen = persons.find((p) => p.id === firstPersonId)!.generation;
-      const layer = generationToLayer.get(gen)!;
-
-      return {
-        ...n,
-        layoutOptions: {
-          ...n.layoutOptions,
-          // Fuerza a ELK a poner este nodo en la layer indicada
-          "elk.layered.layering.layerConstraint": String(layer),
-        },
-      };
-    }),
-    ...soloPersonElkNodes.map((n) => {
-      const gen = persons.find((p) => p.id === n.id)!.generation;
-      const layer = generationToLayer.get(gen)!;
-
-      return {
-        ...n,
-        layoutOptions: {
-          "elk.layered.layering.layerConstraint": String(layer),
-        },
-      };
-    }),
-  ];
+const allRootNodes: ElkNode[] = [
+  ...coupleElkNodes,
+  ...soloPersonElkNodes,
+];
 
   // ── 5. Graph raíz ELK ─────────────────────────────────────────────────────
 
-  const elkGraph: ElkNode = {
-    id: "root",
-    layoutOptions: {
-      "elk.algorithm": "layered",
-      "elk.direction": "DOWN",           // generaciones de arriba hacia abajo
-      "elk.spacing.nodeNode": "60",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "80",
-      "elk.edgeRouting": "ORTHOGONAL",
-      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
-      "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
-    },
-    children: allRootNodes,
-    edges: elkEdges,
-  };
+const elkGraph: ElkNode = {
+  id: "root",
+  layoutOptions: {
+    "elk.algorithm": "layered",
+    "elk.direction": "DOWN",
+    "elk.spacing.nodeNode": "80",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "120",
+    "elk.edgeRouting": "ORTHOGONAL",
+    "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    // Sin INTERACTIVE ni layerConstraint — ELK deduce layers desde edges
+  },
+  children: allRootNodes,
+  edges: elkEdges,
+};
 
   // ── 6. Correr ELK ─────────────────────────────────────────────────────────
 
@@ -221,51 +185,62 @@ export async function computeElkLayout(
   const nodeMeta = new Map<string, ElkNodeMeta>();
 
   function extractPositions(nodes: ElkNode[], offsetX = 0, offsetY = 0) {
-    for (const node of nodes) {
-      const x = (node.x ?? 0) + offsetX;
-      const y = (node.y ?? 0) + offsetY;
-      const width  = node.width  ?? NODE_WIDTH;
-      const height = node.height ?? NODE_HEIGHT;
+  for (const node of nodes) {
+    const x = (node.x ?? 0) + offsetX;
+    const y = (node.y ?? 0) + offsetY;
+    const width  = node.width  ?? NODE_WIDTH;
+    const height = node.height ?? NODE_HEIGHT;
 
-      positions.set(node.id, { x, y, width, height });
+    positions.set(node.id, { x, y, width, height });
 
-      // Si tiene hijos (compound = CoupleNode), los extraemos con offset
-      if (node.children && node.children.length > 0) {
-        const couple = couples.find((c) => getCoupleId(c.persons) === node.id);
-        const gen = couple
-          ? persons.find((p) => p.id === couple.persons[0])!.generation
-          : 0;
+    const couple = couples.find((c) => getCoupleId(c.persons) === node.id);
 
+    if (couple) {
+      // Es un CoupleNode — calcular posiciones internas manualmente
+      const PADDING = 12;
+      const GAP     = 16;
+
+      nodeMeta.set(node.id, {
+        id: node.id,
+        nodeType: "couple",
+        generation: persons.find((p) => p.id === couple.persons[0])!.generation,
+      });
+
+      // PersonNode A — izquierda
+      positions.set(couple.persons[0], {
+        x: x + PADDING,
+        y: y + PADDING,
+        width:  NODE_WIDTH,
+        height: NODE_HEIGHT,
+      });
+
+      // PersonNode B — derecha
+      positions.set(couple.persons[1], {
+        x: x + PADDING + NODE_WIDTH + GAP,
+        y: y + PADDING,
+        width:  NODE_WIDTH,
+        height: NODE_HEIGHT,
+      });
+
+      for (const personId of couple.persons) {
+        nodeMeta.set(personId, {
+          id: personId,
+          nodeType: "person",
+          generation: persons.find((p) => p.id === personId)!.generation,
+        });
+      }
+    } else {
+      const person = persons.find((p) => p.id === node.id);
+      if (person) {
         nodeMeta.set(node.id, {
           id: node.id,
-          nodeType: "couple",
-          generation: gen,
+          nodeType: "person",
+          generation: person.generation,
         });
-
-        extractPositions(node.children, x + COUPLE_PADDING, y + COUPLE_PADDING);
-
-        // Metadata de los PersonNodes internos
-        for (const childId of (couple?.persons ?? [])) {
-          const person = persons.find((p) => p.id === childId)!;
-          nodeMeta.set(childId, {
-            id: childId,
-            nodeType: "person",
-            generation: person.generation,
-          });
-        }
-      } else {
-        // Nodo persona solo
-        const person = persons.find((p) => p.id === node.id);
-        if (person) {
-          nodeMeta.set(node.id, {
-            id: node.id,
-            nodeType: "person",
-            generation: person.generation,
-          });
-        }
       }
     }
   }
+}
 
   extractPositions(layouted.children ?? []);
 

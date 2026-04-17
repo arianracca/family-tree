@@ -149,10 +149,6 @@ export function transformToReactFlow(
   }
 
   // ── 4. Edges parent-child ──────────────────────────────────────────────────
-  //
-  // Misma lógica de deduplicación que en elkLayout.ts:
-  // source = CoupleNode del padre (o PersonNode si está solo)
-  // target = CoupleNode del hijo  (o PersonNode si está solo)
 
   const processedEdges = new Set<string>();
 
@@ -160,10 +156,15 @@ export function transformToReactFlow(
     if (rel.type !== "parent-child") continue;
 
     const parentCouple = findCoupleForPerson(rel.from, couples);
-    const childCouple  = findCoupleForPerson(rel.to,   couples);
 
-    const sourceId = parentCouple ? getCoupleId(parentCouple.persons) : rel.from;
-    const targetId = childCouple  ? getCoupleId(childCouple.persons)  : rel.to;
+    // Source: sigue siendo el CoupleNode del padre (o PersonNode si está solo)
+    const sourceId = parentCouple
+      ? getCoupleId(parentCouple.persons)
+      : rel.from;
+
+    // Target: ahora apunta al PersonNode específico, NO al CoupleNode
+    // Así la línea llega a Helder o a Nilde individualmente
+    const targetId = rel.to;
 
     const edgeKey = `${sourceId}→${targetId}`;
     if (processedEdges.has(edgeKey)) continue;
@@ -183,7 +184,6 @@ export function transformToReactFlow(
       source: sourceId,
       target: targetId,
       data: edgeData,
-      // Handles: sale del bottom del padre, entra al top del hijo
       sourceHandle: "bottom",
       targetHandle: "top",
     });

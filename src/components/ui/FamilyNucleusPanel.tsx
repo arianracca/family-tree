@@ -5,38 +5,37 @@ import { useTreeStore } from "@/store/useTreeStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import type { FamilyNucleus } from "@/types/family";
 
-/*
-    Los puntos clave:
-
-    PersonRow como botón navegable: cada persona en el panel es clickeable. Al hacer click llama a selectPerson + centerOnNode simultáneamente, actualizando la selección y moviendo el viewport del canvas hacia ese nodo. Permite navegar el árbol desde el panel sin tocar el canvas.
-    partnerId derivado del nucleus: en lugar de pasar el partner como prop separado, se deriva del coupleIds filtrando el personId actual. Esto mantiene el panel agnóstico al orden en que ELK guardó los IDs.
-    Animación panel-in: el panel entra desde la derecha con translateX(16px) → 0 y opacity 0 → 1. Es sutil pero da sensación de respuesta inmediata al click.
-    Divisor con gradiente: la línea entre header y body usa un gradiente transparent → dorado → transparent que refuerza la paleta sin ser agresivo.
-    Secciones vacías omitidas: si una persona no tiene pareja, padres o hijos, esa sección directamente no se renderiza. Más limpio que mostrar secciones vacías.
-*/
-
-
-// ─── Tipos auxiliares ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// § 1. TIPOS AUXILIARES
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface PersonRowProps {
   personId: string;
-  role: "parent" | "child" | "partner";
+  role: "parent" | "child" | "partner" | "inlaw";
 }
 
-// ─── Subcomponente: fila de persona ───────────────────────────────────────────
+const roleLabel: Record<PersonRowProps["role"], string> = {
+  parent:  "Padre / Madre",
+  child:   "Hijo / Hija",
+  partner: "Pareja",
+  inlaw:   "Suegro / Suegra",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// § 2. SUBCOMPONENTE — PersonRow
+// ─────────────────────────────────────────────────────────────────────────────
 
 function PersonRow({ personId, role }: PersonRowProps) {
-  const person = useFamilyStore((s) =>
-    s.familyData.persons.find((p) => p.id === personId)
-  );
+  const person       = useFamilyStore((s) => s.familyData.persons.find((p) => p.id === personId));
   const selectPerson = useFamilyStore((s) => s.selectPerson);
   const centerOnNode = useTreeStore((s) => s.centerOnNode);
 
   if (!person) return null;
 
-  const fullName = [person.nombre, person.apellidoPaterno, person.apellidoMaterno]
-    .filter(Boolean)
-    .join(" ");
+  const fullName =
+    [person.nombre, person.apellidoPaterno, person.apellidoMaterno]
+      .filter(Boolean)
+      .join(" ");
 
   const initials =
     person.nombre.charAt(0).toUpperCase() +
@@ -61,24 +60,18 @@ function PersonRow({ personId, role }: PersonRowProps) {
           <span className="person-row__deceased" aria-label="Fallecido">†</span>
         )}
       </span>
-
       <span className="person-row__info">
         <span className="person-row__name">{fullName}</span>
         <span className="person-row__role">{roleLabel[role]}</span>
       </span>
-
       <span className="person-row__arrow" aria-hidden="true">→</span>
     </button>
   );
 }
 
-const roleLabel: Record<PersonRowProps["role"], string> = {
-  parent:  "Padre / Madre",
-  child:   "Hijo / Hija",
-  partner: "Pareja",
-};
-
-// ─── Subcomponente: sección ───────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// § 3. SUBCOMPONENTE — Section
+// ─────────────────────────────────────────────────────────────────────────────
 
 function Section({
   title,
@@ -95,39 +88,72 @@ function Section({
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// § 4. COMPONENTE PRINCIPAL — FamilyNucleusPanel
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Props {
   nucleus: FamilyNucleus;
 }
 
 export default function FamilyNucleusPanel({ nucleus }: Props) {
-  const { personId, coupleIds, parentIds, childrenIds } = nucleus;
+  const { personId, coupleIds, parentIdsA, parentIdsB, childrenIds } = nucleus;
+
+  // ── § 4.1 Store hooks ──────────────────────────────────────────────────────
 
   const clearSelection = useFamilyStore((s) => s.clearSelection);
   const clearHighlight = useTreeStore((s) => s.clearHighlight);
+  const persons        = useFamilyStore((s) => s.familyData.persons);
 
-  const person = useFamilyStore((s) =>
-    s.familyData.persons.find((p) => p.id === personId)
-  );
+  // ── § 4.2 Derivaciones de datos ────────────────────────────────────────────
+
+  const person = persons.find((p) => p.id === personId);
+
+  // partnerId: el otro miembro de la pareja
+  const partnerId = coupleIds?.find((id) => id !== personId) ?? null;
+  const partnerPerson = partnerId ? persons.find((p) => p.id === partnerId) : null;
+
+  // Determinar qué parentIds corresponden a esta persona y cuáles a su pareja.
+  // coupleIds[0] = personA, coupleIds[1] = personB.
+  // Si personId es coupleIds[0] → sus padres son parentIdsA, suegros parentIdsB.
+  // Si personId es coupleIds[1] → sus padres son parentIdsB, suegros parentIdsA.
+  const myParentIds    = !coupleIds
+    ? parentIdsA                                              // persona sola
+    : personId === coupleIds[0]
+      ? parentIdsA
+      : parentIdsB;
+
+  const inlawParentIds = !coupleIds
+    ? []
+    : personId === coupleIds[0]
+      ? parentIdsB
+      : parentIdsA;
+
+  const hasParents = myParentIds.length > 0;
+  const hasInlaws  = inlawParentIds.length > 0;
+
+  // ── § 4.3 Handlers ─────────────────────────────────────────────────────────
 
   const handleClose = useCallback(() => {
     clearSelection();
     clearHighlight();
   }, [clearSelection, clearHighlight]);
 
+  // ── § 4.4 Guard ────────────────────────────────────────────────────────────
+
   if (!person) return null;
 
-  const fullName = [person.nombre, person.apellidoPaterno, person.apellidoMaterno]
-    .filter(Boolean)
-    .join(" ");
+  const fullName =
+    [person.nombre, person.apellidoPaterno, person.apellidoMaterno]
+      .filter(Boolean)
+      .join(" ");
 
-  // El partner es el otro miembro de la pareja (distinto a personId)
-  const partnerId = coupleIds?.find((id) => id !== personId) ?? null;
+  // ── § 4.5 Render ───────────────────────────────────────────────────────────
 
   return (
     <aside className="nucleus-panel">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="nucleus-panel__header">
         <div className="nucleus-panel__title-group">
           <span className="nucleus-panel__label">Núcleo familiar</span>
@@ -143,29 +169,37 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
         </button>
       </div>
 
-      {/* Divisor */}
       <div className="nucleus-panel__divider" />
 
-      {/* Contenido */}
+      {/* ── Body ── */}
       <div className="nucleus-panel__body">
 
-        {/* Pareja */}
+        {/* § 4.5.1 — Pareja */}
         {partnerId && (
           <Section title="Pareja">
             <PersonRow personId={partnerId} role="partner" />
           </Section>
         )}
 
-        {/* Padres */}
-        {parentIds.length > 0 && (
+        {/* § 4.5.2 — Padres (solo los de esta persona) */}
+        {hasParents && (
           <Section title="Padres">
-            {parentIds.map((id) => (
+            {myParentIds.map((id) => (
               <PersonRow key={id} personId={id} role="parent" />
             ))}
           </Section>
         )}
 
-        {/* Hijos */}
+        {/* § 4.5.3 — Suegros (padres de la pareja) */}
+        {hasInlaws && (
+          <Section title={`Padres de ${partnerPerson?.nombre ?? "pareja"}`}>
+            {inlawParentIds.map((id) => (
+              <PersonRow key={id} personId={id} role="inlaw" />
+            ))}
+          </Section>
+        )}
+
+        {/* § 4.5.4 — Hijos */}
         {childrenIds.length > 0 && (
           <Section title="Hijos">
             {childrenIds.map((id) => (
@@ -174,12 +208,13 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
           </Section>
         )}
 
-        {/* Sin relaciones */}
-        {!partnerId && parentIds.length === 0 && childrenIds.length === 0 && (
+        {/* § 4.5.5 — Estado vacío */}
+        {!partnerId && !hasParents && !hasInlaws && childrenIds.length === 0 && (
           <p className="nucleus-panel__empty">
             Sin relaciones registradas.
           </p>
         )}
+
       </div>
 
       <style>{panelStyles}</style>
@@ -187,7 +222,9 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
   );
 }
 
-// ─── Estilos ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// § 5. ESTILOS
+// ─────────────────────────────────────────────────────────────────────────────
 
 const panelStyles = `
   .nucleus-panel {
@@ -206,17 +243,11 @@ const panelStyles = `
   }
 
   @keyframes panel-in {
-    from {
-      opacity: 0;
-      transform: translateX(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 
-  /* Header */
+  /* ── Header ── */
   .nucleus-panel__header {
     display: flex;
     align-items: flex-start;
@@ -238,7 +269,6 @@ const panelStyles = `
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: #c9a84c;
-    font-family: 'Georgia', serif;
   }
 
   .nucleus-panel__name {
@@ -274,21 +304,15 @@ const panelStyles = `
     color: #e8e8e8;
   }
 
-  /* Divisor */
+  /* ── Divisor ── */
   .nucleus-panel__divider {
     height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      #c9a84c44 30%,
-      #c9a84c44 70%,
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, #c9a84c44 30%, #c9a84c44 70%, transparent);
     flex-shrink: 0;
     margin: 0 20px;
   }
 
-  /* Body */
+  /* ── Body ── */
   .nucleus-panel__body {
     flex: 1;
     overflow-y: auto;
@@ -308,7 +332,7 @@ const panelStyles = `
     padding: 24px 0;
   }
 
-  /* Sección */
+  /* ── Section ── */
   .nucleus-section {
     display: flex;
     flex-direction: column;
@@ -331,7 +355,7 @@ const panelStyles = `
     gap: 4px;
   }
 
-  /* PersonRow */
+  /* ── PersonRow ── */
   .person-row {
     width: 100%;
     display: flex;
@@ -342,9 +366,7 @@ const panelStyles = `
     border: 1px solid transparent;
     border-radius: 5px;
     cursor: pointer;
-    transition:
-      background  150ms ease,
-      border-color 150ms ease;
+    transition: background 150ms ease, border-color 150ms ease;
     text-align: left;
   }
 
@@ -357,7 +379,6 @@ const panelStyles = `
     border-color: #c9a84c22;
   }
 
-  /* Avatar */
   .person-row__avatar {
     position: relative;
     flex-shrink: 0;
@@ -402,7 +423,6 @@ const panelStyles = `
     line-height: 1;
   }
 
-  /* Info */
   .person-row__info {
     flex: 1;
     min-width: 0;
@@ -430,7 +450,6 @@ const panelStyles = `
     letter-spacing: 0.04em;
   }
 
-  /* Flecha */
   .person-row__arrow {
     flex-shrink: 0;
     font-size: 11px;

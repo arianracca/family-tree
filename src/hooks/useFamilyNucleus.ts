@@ -4,20 +4,9 @@ import { useTreeStore } from "@/store/useTreeStore";
 import { computeFamilyNucleus } from "@/lib/familyNucleus";
 import type { FamilyNucleus } from "@/types/family";
 
-/*
-    Los puntos claves:
-    useFamilyNucleus
-
-    useMemo en lugar de useEffect: el núcleo es una derivación pura de personId + familyData. useMemo es más apropiado que useEffect + useState porque evita un render extra.
-    Side effect controlado dentro del memo: el setHighlight dentro del useMemo es el único side effect. Es aceptable acá porque es sincrónico y directamente derivado del cálculo.
-    Reconstrucción de IDs consistente: los edgeId se reconstruyen con la misma lógica que graphTransform.ts (edge-${sourceId}→${targetId}) para garantizar que los IDs coincidan exactamente con los del canvas.
-*/
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useFamilyNucleus(personId: string | null): FamilyNucleus | null {
-  const familyData  = useFamilyStore((state) => state.familyData);
-  const setHighlight = useTreeStore((state) => state.setHighlight);
+  const familyData     = useFamilyStore((state) => state.familyData);
+  const setHighlight   = useTreeStore((state) => state.setHighlight);
   const clearHighlight = useTreeStore((state) => state.clearHighlight);
 
   const nucleus = useMemo(() => {
@@ -33,32 +22,30 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
       return null;
     }
 
-    // ── Calcular qué nodos y edges resaltar ──────────────────────────────────
-
     const nodeIds = new Set<string>();
     const edgeIds = new Set<string>();
 
-    // Personas del núcleo
-    result.parentIds.forEach((id) => nodeIds.add(id));
+    // ── Todos los padres (A + B) ──────────────────────────────────────────────
+    const allParentIds = [...result.parentIdsA, ...result.parentIdsB];
+
+    allParentIds.forEach((id) => nodeIds.add(id));
     result.childrenIds.forEach((id) => nodeIds.add(id));
 
-    // La pareja central
+    // ── Pareja central ────────────────────────────────────────────────────────
     if (result.coupleIds) {
       const [idA, idB] = result.coupleIds;
       nodeIds.add(idA);
       nodeIds.add(idB);
-      // El CoupleNode compound
       nodeIds.add(`couple-${idA}-${idB}`);
-      // El edge interno de pareja
       edgeIds.add(`couple-edge-${idA}-${idB}`);
     } else {
-      // Persona sola sin pareja
       nodeIds.add(personId);
     }
 
-    // CoupleNodes de los padres
     const couples = familyData.relations.filter((r) => r.type === "couple");
-    for (const parentId of result.parentIds) {
+
+    // ── CoupleNodes de los padres ─────────────────────────────────────────────
+    for (const parentId of allParentIds) {
       const parentCouple = couples.find(
         (c) => c.type === "couple" && c.persons.includes(parentId)
       );
@@ -70,7 +57,7 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
       }
     }
 
-    // CoupleNodes de los hijos
+    // ── CoupleNodes de los hijos ──────────────────────────────────────────────
     for (const childId of result.childrenIds) {
       const childCouple = couples.find(
         (c) => c.type === "couple" && c.persons.includes(childId)
@@ -83,7 +70,7 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
       }
     }
 
-    // Edges parent-child relevantes
+    // ── Edges parent-child relevantes ─────────────────────────────────────────
     familyData.relations
       .filter((r) => r.type === "parent-child")
       .forEach((r) => {
@@ -91,7 +78,7 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
 
         const fromInNucleus =
           nodeIds.has(r.from) ||
-          result.parentIds.includes(r.from) ||
+          allParentIds.includes(r.from) ||
           (result.coupleIds?.includes(r.from) ?? false);
 
         const toInNucleus =
@@ -100,7 +87,6 @@ export function useFamilyNucleus(personId: string | null): FamilyNucleus | null 
           (result.coupleIds?.includes(r.to) ?? false);
 
         if (fromInNucleus && toInNucleus) {
-          // Reconstruir el edgeId igual que en graphTransform.ts
           const parentCouple = couples.find(
             (c) => c.type === "couple" && c.persons.includes(r.from)
           );
