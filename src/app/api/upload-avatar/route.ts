@@ -45,11 +45,11 @@ async function updatePhotoUrlInSource(personId: string, photoUrl: string) {
   const updated = source.replace(
     // Regex: encuentra id: "pX", ... photoUrl: <cualquier valor>
     new RegExp(
-      `(id:\\s*"${personId}"[\\s\\S]*?photoUrl:\\s*)(?:null|"[^"]*")`,
-      "m"
-    ),
-    `$1"${photoUrl}"`
-  );
+    `(id:\\s*"${personId}"[^}]*?photoUrl:\\s*)(?:null|"[^"]*")`,
+    "s"  // dotAll — . incluye saltos de línea, sin multiline
+  ),
+  `$1"${photoUrl}"`
+);
 
   await writeFile(FAMILY_DATA_PATH, updated, "utf-8");
 }

@@ -13,7 +13,7 @@ export const FAMILY_DATA: FamilyData = {
       ciudad: null,
       vivo: true,
       generation: 100000,
-      photoUrl: null,
+      photoUrl: "/persons/p1_Helder_Racca/00.Avatar.webp",
     },
     {
       id: "p2",
@@ -26,7 +26,7 @@ export const FAMILY_DATA: FamilyData = {
       ciudad: null,
       vivo: true,
       generation: 100000,
-      photoUrl: null,
+      photoUrl: "/persons/p2_Nilde_Cambiaso/00.Avatar.jpg",
     },
     {
       id: "p3",
@@ -53,7 +53,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: true,
       generation: 100001,
-      photoUrl: null,
+      photoUrl: "/persons/p5_Arlene_Racca/00.Avatar.jpg",
     },
     {
       id: "p6",
@@ -62,7 +62,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: null,
+      photoUrl: "/persons/p6_Jose_Pablo_Cambiaso/00.Avatar.jpg",
     },
     {
       id: "p7",
@@ -71,7 +71,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: null,
+      photoUrl: "/persons/p7_Edith_Gladys_Soverchia/00.Avatar.jpg",
     },
     {
       id: "p8",
@@ -80,7 +80,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: null,
+      photoUrl: "/persons/p8_Francisco_Racca/00.Avatar.webp",
     },
     {
       id: "p9",
@@ -89,7 +89,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99999,
-      photoUrl: null,
+      photoUrl: "/persons/p9_Cladi_Tentella/00.Avatar.webp",
     },
     {
       id: "p10",
@@ -98,7 +98,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99998,
-      photoUrl: null,
+      photoUrl: "/persons/p10_Armando_Tentella/00.Avatar.webp",
     },
     {
       id: "p11",
@@ -107,7 +107,7 @@ export const FAMILY_DATA: FamilyData = {
       apellidoMaterno: "",
       vivo: false,
       generation: 99998,
-      photoUrl: null,
+      photoUrl: "/persons/p11_Rosa_Domizi/00.Avatar.webp",
     },
   ],
   relations: [

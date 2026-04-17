@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore } from "@/store/useTreeStore";
 
@@ -38,6 +38,10 @@ export default function AvatarUpload({
   const updateNodeData = useTreeStore((s) => s.updateNodeData);
 
   // ── § 2.2 Preview local antes de subir ────────────────────────────────────
+
+  useEffect(() => {
+  setPreview(currentPhotoUrl ?? null);
+}, [personId, currentPhotoUrl]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
