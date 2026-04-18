@@ -1,5 +1,6 @@
 "use client";
 
+import ParentChildEdge from "./edges/ParentChildEdge";
 import { useCallback, useEffect, useRef } from "react";
 import {
   ReactFlow,
@@ -22,6 +23,7 @@ import CoupleEdge from "./edges/CoupleEdge";
 import type { EdgeTypes } from "@xyflow/react";
 
 const edgeTypes: EdgeTypes = {
+  parentChild: ParentChildEdge,
   couple: CoupleEdge,
 };
 

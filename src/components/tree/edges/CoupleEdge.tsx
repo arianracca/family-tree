@@ -1,36 +1,11 @@
 import { memo } from "react";
-import { type EdgeProps, getStraightPath } from "@xyflow/react";
-import type { CoupleEdgeData } from "@/types/graph";
+import type { EdgeProps } from "@xyflow/react";
 
-function CoupleEdge({
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  data,
-}: EdgeProps) {
-  // Casteamos data manualmente ya que EdgeProps usa Record<string, unknown>
-  const edgeData = data as CoupleEdgeData | undefined;
-  const active = edgeData?.active ?? true;
-
-  const [edgePath] = getStraightPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-  });
-
-  return (
-    <g>
-      <path
-        d={edgePath}
-        fill="none"
-        stroke={active ? "#c9a84c66" : "#333"}
-        strokeWidth={1.5}
-        strokeDasharray={active ? "none" : "4 3"}
-      />
-    </g>
-  );
+// Los dos PersonNodes de una pareja ya están visualmente contenidos
+// dentro del CoupleNode compound — el edge entre ellos es redundante
+// y genera la línea diagonal que cruza el nodo. No renderizamos nada.
+function CoupleEdge(_props: EdgeProps) {
+  return null;
 }
 
 export default memo(CoupleEdge);

@@ -128,8 +128,11 @@ export async function computeElkLayout(
       "elk.spacing.nodeNode":                       "80",
       "elk.layered.spacing.nodeNodeBetweenLayers":  "120",
       "elk.edgeRouting":                            "ORTHOGONAL",
-      "elk.layered.nodePlacement.strategy":         "BRANDES_KOEPF",
+      "elk.layered.nodePlacement.strategy":         "NETWORK_SIMPLEX",
       "elk.layered.crossingMinimization.strategy":  "LAYER_SWEEP",
+
+      "elk.layered.crossingMinimization.greedySwitch.type":   "TWO_SIDED",
+      "elk.layered.thoroughness":                             "10",
     },
     children: connectedNodes,
     edges: elkEdges,
@@ -200,6 +203,16 @@ export async function computeElkLayout(
   }
 
   extractPositions(layouted.children ?? []);
+  
+  // LOG TEMPORAL — borrar después
+  console.table(
+    [...positions.entries()].map(([id, pos]) => ({
+      id,
+      ...pos,
+      gen: nodeMeta.get(id)?.generation,
+      type: nodeMeta.get(id)?.nodeType,
+    }))
+  );
 
 // ── 8. Posicionar nodos huérfanos manualmente ─────────────────────────────
   //
@@ -207,17 +220,15 @@ export async function computeElkLayout(
   // con el padding interno que ELK agrega), leemos la Y real de un nodo
   // conectado de la misma generación y la usamos como referencia exacta.
 
-  // Construir mapa generation → Y real (desde nodos ya posicionados por ELK)
+  // Construir mapa generation → Y real desde CoupleNodes (no PersonNodes)
+  // El CoupleNode es la referencia correcta — su Y es la Y visual del layer
   const generationToRealY = new Map<number, number>();
 
   for (const [nodeId, pos] of positions) {
     const meta = nodeMeta.get(nodeId);
     if (!meta) continue;
     if (generationToRealY.has(meta.generation)) continue;
-
-    // Usar solo PersonNodes para la referencia Y — no CoupleNodes
-    // El CoupleNode tiene padding interno que desplaza la Y visual
-    if (meta.nodeType === "couple") continue;
+    if (meta.nodeType !== "couple") continue;  // ← solo CoupleNodes como referencia
 
     generationToRealY.set(meta.generation, pos.y);
   }
@@ -264,51 +275,75 @@ export async function computeElkLayout(
   const ORPHAN_MARGIN = 80;
   let orphanCursorX = minX - ORPHAN_MARGIN;
 
-  for (const orphan of orphanNodes) {
-    const couple = couples.find((c) => getCoupleId(c.persons) === orphan.id);
-    const gen = couple
-      ? persons.find((p) => p.id === couple.persons[0])!.generation
-      : persons.find((p) => p.id === orphan.id)!.generation;
+  for (const orphan of orphanNodes) {// Primero posicionar orphan-couples, después orphan-solos
+// para que los solos puedan usar los couples como referencia Y
+const orphanCouples = orphanNodes.filter((n) =>
+  couples.some((c) => getCoupleId(c.persons) === n.id)
+);
+const orphanSolos = orphanNodes.filter((n) =>
+  !couples.some((c) => getCoupleId(c.persons) === n.id)
+);
 
-    // Y exacta alineada con los nodos conectados de la misma generación
-    const y = generationToRealY.get(gen) ?? 0;
+for (const orphan of [...orphanCouples, ...orphanSolos]) {
+  const couple = couples.find((c) => getCoupleId(c.persons) === orphan.id);
+  const gen = couple
+    ? persons.find((p) => p.id === couple.persons[0])!.generation
+    : persons.find((p) => p.id === orphan.id)!.generation;
 
-    // X: apilamos huérfanos de derecha a izquierda
-    const orphanWidth = orphan.width ?? NODE_WIDTH;
-    orphanCursorX -= orphanWidth;
-    const x = orphanCursorX;
-    orphanCursorX -= ORPHAN_MARGIN;
+  const y = generationToRealY.get(gen) ?? 0;
+
+  const orphanWidth = orphan.width ?? NODE_WIDTH;
+  orphanCursorX -= orphanWidth;
+  const x = orphanCursorX;
+  orphanCursorX -= ORPHAN_MARGIN;
+
+  if (couple) {
+    const PADDING = 12;
+    const GAP     = 16;
+
+    nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "couple", generation: gen });
 
     positions.set(orphan.id, {
-      x,
-      y,
+      x, y,
       width:  orphanWidth,
       height: orphan.height ?? NODE_HEIGHT,
     });
 
-    if (couple) {
-      const PADDING = 12;
-      const GAP     = 16;
+    positions.set(couple.persons[0], {
+      x: x + PADDING, y: y + PADDING,
+      width: NODE_WIDTH, height: NODE_HEIGHT,
+    });
+    positions.set(couple.persons[1], {
+      x: x + PADDING + NODE_WIDTH + GAP, y: y + PADDING,
+      width: NODE_WIDTH, height: NODE_HEIGHT,
+    });
+    for (const personId of couple.persons) {
+      nodeMeta.set(personId, { id: personId, nodeType: "person", generation: gen });
+    }
+  } else {
+    const person = persons.find((p) => p.id === orphan.id);
+    if (person) {
+      nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "person", generation: gen });
+    }
 
-      nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "couple", generation: gen });
-
-      positions.set(couple.persons[0], {
-        x: x + PADDING, y: y + PADDING,
-        width: NODE_WIDTH, height: NODE_HEIGHT,
-      });
-      positions.set(couple.persons[1], {
-        x: x + PADDING + NODE_WIDTH + GAP, y: y + PADDING,
-        width: NODE_WIDTH, height: NODE_HEIGHT,
-      });
-      for (const personId of couple.persons) {
-        nodeMeta.set(personId, { id: personId, nodeType: "person", generation: gen });
-      }
-    } else {
-      const person = persons.find((p) => p.id === orphan.id);
-      if (person) {
-        nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "person", generation: gen });
+    // Buscar CoupleNode de la misma generación ya posicionado (ahora sí existe)
+    let referenceY = y;
+    for (const [nodeId, pos] of positions) {
+      const meta = nodeMeta.get(nodeId);
+      if (meta?.nodeType === "couple" && meta.generation === gen) {
+        referenceY = pos.y + (pos.height - NODE_HEIGHT) / 2;
+        break;
       }
     }
+
+    positions.set(orphan.id, {
+      x,
+      y: referenceY,
+      width:  orphanWidth,
+      height: orphan.height ?? NODE_HEIGHT,
+    });
+  }
+}
   }
 
   return { positions, nodeMeta };

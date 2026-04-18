@@ -1,4 +1,4 @@
-import type { FamilyData, CoupleRelation, Person } from "@/types/family";
+import type { FamilyData, CoupleRelation, Person, ParentChildRelation } from "@/types/family";
 import type {
   ElkLayoutOutput,
   AppNode,
@@ -61,6 +61,31 @@ export function transformToReactFlow(
 
     if (!pos || !meta) continue;
 
+    // ── Ordenar personas dentro del compound por X de sus padres ──────────
+    // La persona cuyos padres están más a la izquierda va primero (slot izquierdo)
+    const orderedPersonIds = [...couple.persons].sort((idA, idB) => {
+      const parentsA = relations
+        .filter((r): r is ParentChildRelation => r.type === "parent-child" && r.to === idA)
+        .map((r) => {
+          const coupleOfParent = couples.find((c) => c.persons.includes(r.from));
+          const refId = coupleOfParent ? getCoupleId(coupleOfParent.persons) : r.from;
+          return positions.get(refId)?.x ?? Infinity;
+        });
+      const parentsB = relations
+        .filter((r): r is ParentChildRelation => r.type === "parent-child" && r.to === idB)
+        .map((r) => {
+          const coupleOfParent = couples.find((c) => c.persons.includes(r.from));
+          const refId = coupleOfParent ? getCoupleId(coupleOfParent.persons) : r.from;
+          return positions.get(refId)?.x ?? Infinity;
+        });
+
+      const minA = parentsA.length > 0 ? Math.min(...parentsA) : Infinity;
+      const minB = parentsB.length > 0 ? Math.min(...parentsB) : Infinity;
+
+      return minA - minB;
+    });
+    // ─────────────────────────────────────────────────────────────────────
+
     const coupleNodeData: CoupleNodeData = {
       coupleId,
       personIds: couple.persons,
@@ -81,73 +106,105 @@ export function transformToReactFlow(
       style: { width: pos.width, height: pos.height },
     });
 
-    // ── 2. PersonNodes dentro del compound ─────────────────────────────────
+// ── 2. PersonNodes dentro del compound ─────────────────────────────────
+  const NODE_WIDTH_LOCAL = 180;
+  const PADDING = 12;
+  const GAP = 16;
 
-    for (const personId of couple.persons) {
-      const person = persons.find((p) => p.id === personId);
-      if (!person) continue;
+  orderedPersonIds.forEach((personId, slotIndex) => {
+    const person = persons.find((p) => p.id === personId);
+    if (!person) return;
 
-      const personPos = positions.get(personId);
-      const personMeta = nodeMeta.get(personId);
-      if (!personPos || !personMeta) continue;
+    const personPos = positions.get(personId);
+    const personMeta = nodeMeta.get(personId);
+    if (!personPos || !personMeta) return;
 
-      const personNodeData: PersonNodeData = {
-        personId:    person.id,
-        firstName:   person.firstName,
-        middleName:  person.middleName ?? null,
-        lastName:    person.lastName,
-        motherLastName: person.motherLastName ?? null,
-        isAlive:     person.isAlive,
-        generation:  person.generation,
-        photoUrl:    person.photoUrl ?? null,
-      };
+    const personNodeData: PersonNodeData = {
+      personId:      person.id,
+      firstName:     person.firstName,
+      middleName:    person.middleName    ?? null,
+      lastName:      person.lastName,
+      motherLastName: person.motherLastName ?? null,
+      isAlive:       person.isAlive,
+      generation:    person.generation,
+      photoUrl:      person.photoUrl      ?? null,
+    };
 
-      nodes.push({
-        id: personId,
-        type: "person",
-        // La posición es relativa al CoupleNode padre
-        position: {
-          x: personPos.x - pos.x,
-          y: personPos.y - pos.y,
-        },
-        data: personNodeData,
-        width: personPos.width,
-        height: personPos.height,
-        // Declara que este nodo vive dentro del CoupleNode
-        parentId: coupleId,
-        extent: "parent",
-      });
-    }
+    nodes.push({
+      id: personId,
+      type: "person",
+      position: {
+        x: PADDING + slotIndex * (NODE_WIDTH_LOCAL + GAP),
+        y: PADDING,
+      },
+      data: personNodeData,
+      width: personPos.width,
+      height: personPos.height,
+      parentId: coupleId,
+      extent: "parent",
+    });
+  });
   }
 
-  // ── 3. PersonNodes sueltos (sin pareja) ────────────────────────────────────
+// ── 3. PersonNodes sueltos (sin pareja) ────────────────────────────────────
 
   const personsInCouple = new Set(couples.flatMap((c) => c.persons));
+  const COUPLE_HEIGHT   = 80 + 12 * 2; // 104 — igual que elkLayout
+
+  // IDs de nodos huérfanos — su Y ya fue centrada manualmente en elkLayout
+  // Los nodos conectados vienen de ELK sin centrar y necesitan el offset
+  const nodesWithEdges = new Set<string>();
+  for (const rel of parentChildRelations) {
+    if (rel.type !== "parent-child") continue;
+    const parentCouple = findCoupleForPerson(rel.from, couples);
+    const sourceId     = parentCouple ? getCoupleId(parentCouple.persons) : rel.from;
+    const childCouple  = findCoupleForPerson(rel.to, couples);
+    const targetId     = childCouple  ? getCoupleId(childCouple.persons)  : rel.to;
+    nodesWithEdges.add(sourceId);
+    nodesWithEdges.add(targetId);
+  }
 
   for (const person of persons) {
     if (personsInCouple.has(person.id)) continue;
 
-    const pos = positions.get(person.id);
+    const pos  = positions.get(person.id);
     const meta = nodeMeta.get(person.id);
     if (!pos || !meta) continue;
 
+    // Nodos huérfanos: su Y ya fue centrada en elkLayout sección 8
+    // Nodos conectados: ELK los posiciona por top → necesitan offset de centrado
+    const isOrphan = !nodesWithEdges.has(person.id);
+
+    const hasCoupleInSameGen = couples.some((c) => {
+      const memberGen = persons.find((p) => p.id === c.persons[0])?.generation;
+      return memberGen === person.generation;
+    });
+
+    const verticalOffset =
+      !isOrphan && hasCoupleInSameGen
+        ? (COUPLE_HEIGHT - (pos.height ?? 80)) / 2
+        : 0;
+
     const personNodeData: PersonNodeData = {
-      personId:    person.id,
-      firstName:   person.firstName,
-      middleName:  person.middleName ?? null,
-      lastName:    person.lastName,
+      personId:       person.id,
+      firstName:      person.firstName,
+      middleName:     person.middleName ?? null,
+      lastName:       person.lastName,
       motherLastName: person.motherLastName ?? null,
-      isAlive:     person.isAlive,
-      generation:  person.generation,
-      photoUrl:    person.photoUrl ?? null,
+      isAlive:        person.isAlive,
+      generation:     person.generation,
+      photoUrl:       person.photoUrl ?? null,
     };
 
     nodes.push({
-      id: person.id,
+      id:   person.id,
       type: "person",
-      position: { x: pos.x, y: pos.y },
-      data: personNodeData,
-      width: pos.width,
+      position: {
+        x: pos.x,
+        y: pos.y + verticalOffset,
+      },
+      data:   personNodeData,
+      width:  pos.width,
       height: pos.height,
     });
   }
