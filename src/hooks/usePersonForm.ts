@@ -95,8 +95,8 @@ export function personToFormData(person: Person, relations: Relation[]): PersonF
 }
 
 function validate(data: PersonFormData): string | null {
-  if (!data.firstName.trim()) return "El nombre es obligatorio.";
-  if (!data.lastName.trim())  return "El apellido es obligatorio.";
+  if (!data.firstName.trim()) return "El Nombre es obligatorio.";
+  if (!data.lastName.trim())  return "El Apellido es obligatorio.";
   if (data.generation === null) return "Definí la generación usando el selector de relación.";
   return null;
 }

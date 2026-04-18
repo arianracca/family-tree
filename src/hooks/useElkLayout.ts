@@ -14,7 +14,6 @@ export function useElkLayout() {
   const abortRef = useRef<boolean>(false);
 
   // ── Huella estructural: solo lo que ELK necesita para calcular posiciones ──
-  // photoUrl, vivo, nombres, etc. NO están acá.
   // Este memo solo cambia cuando cambia la estructura del árbol (personas/relaciones).
   const structuralKey = useMemo(() => {
     const personStructure = familyData.persons.map((p) => `${p.id}:${p.generation}`).join("|");
@@ -65,11 +64,12 @@ export function useElkLayout() {
   useEffect(() => {
     for (const person of familyData.persons) {
       updateNodeData(person.id, {
-        photoUrl:        person.photoUrl ?? null,
-        vivo:            person.vivo,
-        nombre:          person.nombre,
-        apellidoPaterno: person.apellidoPaterno,
-        apellidoMaterno: person.apellidoMaterno,
+        photoUrl:       person.photoUrl ?? null,
+        isAlive:        person.isAlive,
+        firstName:      person.firstName,
+        middleName:     person.middleName  ?? null,
+        lastName:       person.lastName,
+        motherLastName: person.motherLastName ?? null,
       });
     }
   }, [familyData.persons, updateNodeData]);
