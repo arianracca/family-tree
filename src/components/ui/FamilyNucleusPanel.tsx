@@ -43,6 +43,17 @@ function PersonRow({ personId, role }: PersonRowProps) {
 
   if (!person) return null;
 
+  const name = fullName(person);
+  const ini  = initials(person);
+
+  // Cache buster para evitar que el browser sirva la foto vieja
+  // si la URL es la misma pero el archivo cambió
+  const photoSrc = person.photoUrl
+    ? person.photoUrl.includes("?")
+      ? person.photoUrl
+      : `${person.photoUrl}?v=${person.id}`
+    : null;
+
   return (
     <button
       className="person-row"
@@ -51,12 +62,24 @@ function PersonRow({ personId, role }: PersonRowProps) {
       onClick={() => { selectPerson(person.id); centerOnNode(person.id); }}
       type="button"
     >
+      {/* Avatar con foto o iniciales */}
       <span className="person-row__avatar">
-        <span className="person-row__initials">{initials(person)}</span>
-        {!person.isAlive && <span className="person-row__deceased">†</span>}
+        {photoSrc ? (
+          <img
+            src={photoSrc}
+            alt={name}
+            className="person-row__photo"
+          />
+        ) : (
+          <span className="person-row__initials">{ini}</span>
+        )}
+        {!person.isAlive && (
+          <span className="person-row__deceased" aria-label="Fallecido">†</span>
+        )}
       </span>
+
       <span className="person-row__info">
-        <span className="person-row__name">{fullName(person)}</span>
+        <span className="person-row__name">{name}</span>
         <span className="person-row__role">{roleLabel[role]}</span>
       </span>
       <span className="person-row__arrow">→</span>
@@ -615,6 +638,14 @@ const panelStyles = `
     font-weight: 600;
     color: #c9a84c;
     letter-spacing: 0.04em;
+  }
+    
+  .person-row__photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center top;
   }
 
   .person-row[data-alive='false'] .person-row__initials { color: #444; }
