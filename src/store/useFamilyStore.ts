@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { dataProvider } from "@/lib/dataProvider";
+import { FAMILY_DATA } from "@/data/familyData";
 import type { FamilyData, Person, Relation } from "@/types/family";
 
 interface FamilyState {
@@ -44,9 +44,12 @@ export const useFamilyStore = create<FamilyState>()(
         state.error = null;
       });
       try {
-        const data = await dataProvider.getFamilyData();
+        // En desarrollo simulamos latencia
+        if (process.env.NODE_ENV === "development") {
+          await new Promise((r) => setTimeout(r, 300));
+        }
         set((state) => {
-          state.familyData = data;
+          state.familyData = FAMILY_DATA;
           state.isLoading = false;
         });
       } catch (err) {

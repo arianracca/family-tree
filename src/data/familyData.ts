@@ -3,6 +3,19 @@ import type { FamilyData } from "@/types/family";
 export const FAMILY_DATA: FamilyData = {
   persons: [
     {
+      id: "p0",
+      nombre: "Random",
+      apellidoPaterno: "Persona",
+      apellidoMaterno: "",
+      fechaNacimiento: null,
+      fechaFallecimiento: null,
+      nacionalidades: [],
+      ciudad: null,
+      vivo: true,
+      generation: 100000,
+      photoUrl: null,
+    },
+    {
       id: "p1",
       nombre: "Helder",
       apellidoPaterno: "Racca",
