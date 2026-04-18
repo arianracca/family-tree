@@ -1,0 +1,262 @@
+{
+  "persons": [
+    {
+      "id": "p1",
+      "firstName": "Helder",
+      "middleName": null,
+      "lastName": "Racca",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": true,
+      "generation": 100000,
+      "photoUrl": null
+    },
+    {
+      "id": "p2",
+      "firstName": "Nilde",
+      "middleName": "Liliana",
+      "lastName": "Cambiaso",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": true,
+      "generation": 100000,
+      "photoUrl": null,
+      "birthPlace": "Rosario",
+      "customFields": [],
+      "history": null
+    },
+    {
+      "id": "p4",
+      "firstName": "Arian",
+      "middleName": "Augusto",
+      "lastName": "Racca",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": true,
+      "generation": 100001,
+      "photoUrl": null,
+      "birthPlace": "Rosario",
+      "customFields": [],
+      "history": null
+    },
+    {
+      "id": "p6",
+      "firstName": "Jose Pablo",
+      "middleName": null,
+      "lastName": "Cambiaso",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99999,
+      "photoUrl": null
+    },
+    {
+      "id": "p7",
+      "firstName": "Edith",
+      "middleName": "Gladys",
+      "lastName": "Soverchia",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99999,
+      "photoUrl": null
+    },
+    {
+      "id": "p8",
+      "firstName": "Francisco",
+      "middleName": null,
+      "lastName": "Racca",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99999,
+      "photoUrl": null
+    },
+    {
+      "id": "p9",
+      "firstName": "Cladi",
+      "middleName": null,
+      "lastName": "Tentella",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99999,
+      "photoUrl": null
+    },
+    {
+      "id": "p10",
+      "firstName": "Armando",
+      "middleName": null,
+      "lastName": "Tentella",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99998,
+      "photoUrl": null
+    },
+    {
+      "id": "p11",
+      "firstName": "Rosa",
+      "middleName": null,
+      "lastName": "Domizi",
+      "motherLastName": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": false,
+      "generation": 99998,
+      "photoUrl": null
+    },
+    {
+      "id": "p13",
+      "firstName": "Manuela",
+      "middleName": null,
+      "lastName": "Viscarra",
+      "motherLastName": null,
+      "birthPlace": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": true,
+      "generation": 100001,
+      "history": null,
+      "photoUrl": null,
+      "customFields": []
+    },
+    {
+      "id": "p14",
+      "firstName": "Arlene",
+      "middleName": null,
+      "lastName": "Racca",
+      "motherLastName": null,
+      "birthPlace": null,
+      "birthDate": null,
+      "deathDate": null,
+      "nationalities": [],
+      "city": null,
+      "isAlive": true,
+      "generation": 100001,
+      "history": null,
+      "photoUrl": null,
+      "customFields": []
+    }
+  ],
+  "relations": [
+    {
+      "type": "parent-child",
+      "from": "p8",
+      "to": "p1"
+    },
+    {
+      "type": "parent-child",
+      "from": "p9",
+      "to": "p1"
+    },
+    {
+      "type": "parent-child",
+      "from": "p10",
+      "to": "p9"
+    },
+    {
+      "type": "parent-child",
+      "from": "p11",
+      "to": "p9"
+    },
+    {
+      "type": "couple",
+      "persons": [
+        "p6",
+        "p7"
+      ],
+      "active": true
+    },
+    {
+      "type": "couple",
+      "persons": [
+        "p8",
+        "p9"
+      ],
+      "active": true
+    },
+    {
+      "type": "couple",
+      "persons": [
+        "p10",
+        "p11"
+      ],
+      "active": true
+    },
+    {
+      "type": "parent-child",
+      "from": "p1",
+      "to": "p14"
+    },
+    {
+      "type": "couple",
+      "persons": [
+        "p4",
+        "p13"
+      ],
+      "active": true
+    },
+    {
+      "type": "parent-child",
+      "from": "p1",
+      "to": "p4"
+    },
+    {
+      "type": "couple",
+      "persons": [
+        "p2",
+        "p1"
+      ],
+      "active": true
+    },
+    {
+      "type": "parent-child",
+      "from": "p6",
+      "to": "p2"
+    },
+    {
+      "type": "parent-child",
+      "from": "p7",
+      "to": "p2"
+    },
+    {
+      "type": "parent-child",
+      "from": "p2",
+      "to": "p14"
+    },
+    {
+      "type": "parent-child",
+      "from": "p2",
+      "to": "p4"
+    }
+  ]
+}
