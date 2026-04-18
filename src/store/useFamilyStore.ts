@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { FAMILY_DATA } from "@/data/familyData";
+import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyData, Person, Relation } from "@/types/family";
 
 interface FamilyState {
@@ -39,19 +39,10 @@ export const useFamilyStore = create<FamilyState>()(
 
     // ── Carga desde el provider ───────────────────────────────────────────────
     loadFamilyData: async () => {
-      set((state) => {
-        state.isLoading = true;
-        state.error = null;
-      });
+      set((state) => { state.isLoading = true; state.error = null; });
       try {
-        // En desarrollo simulamos latencia
-        if (process.env.NODE_ENV === "development") {
-          await new Promise((r) => setTimeout(r, 300));
-        }
-        set((state) => {
-          state.familyData = FAMILY_DATA;
-          state.isLoading = false;
-        });
+        const data = await activeRepository.getAll();
+        set((state) => { state.familyData = data; state.isLoading = false; });
       } catch (err) {
         set((state) => {
           state.error = err instanceof Error ? err.message : "Error cargando datos";

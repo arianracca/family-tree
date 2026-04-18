@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir, readFile } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
+import type { FamilyData } from "@/types/family";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// § 1. HELPER — construir el slug de carpeta
-// Formato: id_nombre_apellidoPaterno  ej: p1_Helder_Racca
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
-function buildFolderSlug(
-  id: string,
-  nombre: string,
-  apellidoPaterno: string
-): string {
-  const sanitize = (s: string) =>
-    s.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]/g, "");
-  return `${sanitize(id)}_${sanitize(nombre)}_${sanitize(apellidoPaterno)}`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// § 2. HELPER — extensión permitida
-// ─────────────────────────────────────────────────────────────────────────────
+const DATA_PATH = path.join(process.cwd(), "data", "familyData.json");
 
 const ALLOWED_MIME: Record<string, string> = {
   "image/jpeg":    "jpg",
@@ -31,47 +18,36 @@ const ALLOWED_MIME: Record<string, string> = {
   "image/svg+xml": "svg",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// § 3. HELPER — ruta al familyData.ts para actualizar photoUrl
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const FAMILY_DATA_PATH = path.join(process.cwd(), "src", "data", "familyData.ts");
-
-async function updatePhotoUrlInSource(personId: string, photoUrl: string) {
-  const source = await readFile(FAMILY_DATA_PATH, "utf-8");
-
-  // Busca el bloque del personaje por su id y reemplaza photoUrl
-  // Funciona para null y para strings existentes
-  const updated = source.replace(
-    // Regex: encuentra id: "pX", ... photoUrl: <cualquier valor>
-    new RegExp(
-    `(id:\\s*"${personId}"[^}]*?photoUrl:\\s*)(?:null|"[^"]*")`,
-    "s"  // dotAll — . incluye saltos de línea, sin multiline
-  ),
-  `$1"${photoUrl}"`
-);
-
-  await writeFile(FAMILY_DATA_PATH, updated, "utf-8");
+function buildFolderSlug(id: string, firstName: string, lastName: string): string {
+  const sanitize = (s: string) =>
+    s.trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]/g, "");
+  return `${sanitize(id)}_${sanitize(firstName)}_${sanitize(lastName)}`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// § 4. POST handler
-// ─────────────────────────────────────────────────────────────────────────────
+async function readData(): Promise<FamilyData> {
+  const raw = await readFile(DATA_PATH, "utf-8");
+  return JSON.parse(raw);
+}
+
+async function writeData(data: FamilyData): Promise<void> {
+  await writeFile(DATA_PATH, JSON.stringify(data, null, 2), "utf-8");
+}
+
+// ─── POST ─────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
+    const formData     = await req.formData();
+    const file      = formData.get("file")      as File   | null;
+    const personId  = formData.get("personId")  as string | null;
+    const firstName = formData.get("firstName") as string | null;
+    const lastName  = formData.get("lastName")  as string | null;
 
-    const file         = formData.get("file") as File | null;
-    const personId     = formData.get("personId") as string | null;
-    const nombre       = formData.get("nombre") as string | null;
-    const apellido     = formData.get("apellidoPaterno") as string | null;
-
-    // ── Validaciones ──────────────────────────────────────────────────────────
-
-    if (!file || !personId || !nombre || !apellido) {
+    if (!file || !personId || !firstName || !lastName) {
       return NextResponse.json(
-        { error: "Faltan campos requeridos: file, personId, nombre, apellidoPaterno" },
+        { error: "Faltan campos requeridos: file, personId, firstName, lastName" },
         { status: 400 }
       );
     }
@@ -84,27 +60,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Construir rutas ───────────────────────────────────────────────────────
+    // ── Guardar imagen en /public ─────────────────────────────────────────────
 
-    const slug       = buildFolderSlug(personId, nombre, apellido);
+    const slug       = buildFolderSlug(personId, firstName, lastName);
     const folderPath = path.join(process.cwd(), "public", "persons", slug);
-    const fileName   = `00.Avatar.${ext}`;
+    const fileName   = "00.Avatar.webp";
     const filePath   = path.join(folderPath, fileName);
     const publicUrl  = `/persons/${slug}/${fileName}`;
 
-    // ── Guardar archivo ───────────────────────────────────────────────────────
-
     await mkdir(folderPath, { recursive: true });
 
+    // Convertir y comprimir a WebP independientemente del formato original
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
+    const webpBuffer = await sharp(buffer)
+      .webp({ quality: 100, effort: 5 })
+      .toBuffer();
 
-    // ── Actualizar familyData.ts ──────────────────────────────────────────────
+    await writeFile(filePath, webpBuffer);
 
-    await updatePhotoUrlInSource(personId, publicUrl);
+    // ── Actualizar photoUrl en el JSON ────────────────────────────────────────
 
-    // Al final del POST handler, en el return exitoso:
-    // Devolver al cliente con cache buster
+    const data  = await readData();
+    const index = data.persons.findIndex((p) => p.id === personId);
+
+    if (index === -1) {
+      return NextResponse.json(
+        { error: `Persona ${personId} no encontrada` },
+        { status: 404 }
+      );
+    }
+
+    data.persons[index] = { ...data.persons[index], photoUrl: publicUrl };
+    await writeData(data);
+
+    // Cache buster para forzar re-fetch de la imagen en el browser
     const cacheBuster = Date.now();
     return NextResponse.json(
       { photoUrl: `${publicUrl}?v=${cacheBuster}` },
@@ -117,5 +106,56 @@ export async function POST(req: NextRequest) {
       { error: "Error interno del servidor" },
       { status: 500 }
     );
+  }
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { personId } = await req.json() as { personId: string };
+
+    if (!personId) {
+      return NextResponse.json({ error: "Falta personId" }, { status: 400 });
+    }
+
+    const data  = await readData();
+    const index = data.persons.findIndex((p) => p.id === personId);
+
+    if (index === -1) {
+      return NextResponse.json(
+        { error: `Persona ${personId} no encontrada` },
+        { status: 404 }
+      );
+    }
+
+    // Intentar borrar el archivo físico si existe
+    const currentUrl = data.persons[index].photoUrl;
+    if (currentUrl) {
+      try {
+        const { unlink, readdir, rmdir } = await import("fs/promises");
+        // Quitar query string (?v=...) antes de construir la ruta
+        const cleanUrl  = currentUrl.split("?")[0];
+        const filePath  = path.join(process.cwd(), "public", cleanUrl);
+        await unlink(filePath);
+
+        // Borrar la carpeta si quedó vacía
+        const folderPath = path.dirname(filePath);
+        const remaining  = await readdir(folderPath);
+        if (remaining.length === 0) await rmdir(folderPath);
+      } catch {
+        // Si el archivo no existe no es un error crítico, seguimos
+      }
+    }
+
+    // Limpiar photoUrl en el JSON
+    data.persons[index] = { ...data.persons[index], photoUrl: null };
+    await writeData(data);
+
+    return NextResponse.json({ ok: true });
+
+  } catch (err) {
+    console.error("[upload-avatar DELETE]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

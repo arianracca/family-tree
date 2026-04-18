@@ -1,19 +1,20 @@
 // ─── Persona ────────────────────────────────────────────────────────────────
 export interface Person {
   id: string;
-  nombre: string;
-  apellidoPaterno: string;
-  apellidoMaterno?: string;
-  lugarNacimiento?: string;
-  fechaNacimiento?: string | null;
-  fechaFallecimiento?: string | null;
-  nacionalidades?: string[];
-  ciudad?: string | null;
-  vivo: boolean;
-  generation: number; // Ancla: 100000. Padres < 100000, hijos > 100000
-  history?: string; // biografía, anécdotas, etc.
-  photoUrl?: string | null;   // ← nuevo: URL, ruta /public, o base64
-  customFields?: CustomField[];       // ← campos dinámicos
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  motherLastName?: string | null;
+  birthPlace?: string | null;
+  birthDate?: string | null;
+  deathDate?: string | null;
+  nationalities?: string[];
+  city?: string | null;
+  isAlive: boolean;
+  generation: number;
+  history?: string | null;
+  photoUrl?: string | null;
+  customFields?: CustomField[];
 }
 
 // ─── Campos personalizados (ejemplo: profesión, biografía, etc.) ─────────────

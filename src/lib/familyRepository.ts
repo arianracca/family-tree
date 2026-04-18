@@ -1,30 +1,98 @@
 import type { FamilyData, Person, Relation } from "@/types/family";
 
-// ─── Contrato — lo que cualquier implementación debe cumplir ──────────────────
-// Hoy: memoria (store Zustand como fuente de verdad en runtime)
-// Mañana: REST, Supabase, GraphQL — solo cambiás la implementación activa
+// ─── Contrato ─────────────────────────────────────────────────────────────────
+// Cuando llegue el backend REST, creás restRepository implementando
+// esta misma interfaz y lo enchufás en activeRepository. Nada más cambia.
 
 export interface FamilyRepository {
-  // Lectura
   getAll:         () => Promise<FamilyData>;
-
-  // Personas
   createPerson:   (data: Omit<Person, "id">) => Promise<Person>;
   updatePerson:   (id: string, updates: Partial<Person>) => Promise<Person>;
   deletePerson:   (id: string) => Promise<void>;
-
-  // Relaciones
   addRelation:    (relation: Relation) => Promise<void>;
   removeRelation: (relation: Relation) => Promise<void>;
 }
 
-// ─── Implementación local — opera sobre el store en memoria ───────────────────
-// El store de Zustand es la persistencia en runtime.
-// familyData.ts es solo el seed inicial (se carga una vez al arrancar).
+// ─── Implementación API local (Next.js routes → JSON en disco) ────────────────
+
+const apiRepository: FamilyRepository = {
+  getAll: async () => {
+    const res = await fetch("/api/family", { cache: "no-store" });
+    if (!res.ok) throw new Error("Error al cargar los datos");
+    return res.json();
+  },
+
+  createPerson: async (data) => {
+    const res = await fetch("/api/family/persons", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Error al crear la persona");
+    return res.json();
+  },
+
+  updatePerson: async (id, updates) => {
+    const res = await fetch("/api/family/persons/entity", {
+      method:  "PUT",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ id, ...updates }),
+    });
+    if (!res.ok) throw new Error("Error al actualizar la persona");
+    return res.json();
+  },
+
+  deletePerson: async (id) => {
+    const res = await fetch("/api/family/persons/entity", {
+      method:  "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ id }),
+    });
+    if (!res.ok) throw new Error("Error al eliminar la persona");
+  },
+
+  addRelation: async (relation) => {
+    const res = await fetch("/api/family/relations", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(relation),
+    });
+    if (!res.ok) throw new Error("Error al agregar la relación");
+  },
+
+  removeRelation: async (relation) => {
+    const res = await fetch("/api/family/relations", {
+      method:  "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(relation),
+    });
+    if (!res.ok) throw new Error("Error al eliminar la relación");
+  },
+};
+
+// ─── Implementación REST futura ───────────────────────────────────────────────
+// export function createRestRepository(baseUrl: string): FamilyRepository {
+//   return {
+//     getAll:         () => fetch(`${baseUrl}/family`).then(r => r.json()),
+//     createPerson:   (data) => fetch(`${baseUrl}/persons`, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } }).then(r => r.json()),
+//     updatePerson:   (id, updates) => fetch(`${baseUrl}/persons/${id}`, { method: "PUT", body: JSON.stringify(updates), headers: { "Content-Type": "application/json" } }).then(r => r.json()),
+//     deletePerson:   (id) => fetch(`${baseUrl}/persons/${id}`, { method: "DELETE" }).then(() => {}),
+//     addRelation:    (rel) => fetch(`${baseUrl}/relations`, { method: "POST", body: JSON.stringify(rel), headers: { "Content-Type": "application/json" } }).then(() => {}),
+//     removeRelation: (rel) => fetch(`${baseUrl}/relations`, { method: "DELETE", body: JSON.stringify(rel), headers: { "Content-Type": "application/json" } }).then(() => {}),
+//   };
+// }
+
+// ─── Repository activo ────────────────────────────────────────────────────────
+// Para cambiar a REST: export const activeRepository = createRestRepository("https://api.tudominio.com");
+
+export const activeRepository: FamilyRepository = apiRepository;
+
+// ─── Helper para hooks y componentes ─────────────────────────────────────────
+// Mantiene compatibilidad con el código existente que usaba createLocalRepository
 
 export function createLocalRepository(
-  getState: () => { familyData: FamilyData },
-  actions: {
+  _getState: () => { familyData: FamilyData },
+  _actions: {
     addPerson:      (p: Person) => void;
     updatePerson:   (id: string, updates: Partial<Person>) => void;
     removePerson:   (id: string) => void;
@@ -32,58 +100,6 @@ export function createLocalRepository(
     removeRelation: (r: Relation) => void;
   }
 ): FamilyRepository {
-  return {
-    getAll: async () => {
-      if (process.env.NODE_ENV === "development") {
-        await new Promise((r) => setTimeout(r, 300));
-      }
-      return getState().familyData;
-    },
-
-    createPerson: async (data) => {
-      const id = `p${Date.now()}`;
-      const person: Person = { id, ...data };
-      actions.addPerson(person);
-      return person;
-    },
-
-    updatePerson: async (id, updates) => {
-      actions.updatePerson(id, updates);
-      const updated = getState().familyData.persons.find((p) => p.id === id);
-      if (!updated) throw new Error(`Person ${id} not found`);
-      return updated;
-    },
-
-    deletePerson: async (id) => {
-      actions.removePerson(id);
-    },
-
-    addRelation: async (relation) => {
-      actions.addRelation(relation);
-    },
-
-    removeRelation: async (relation) => {
-      actions.removeRelation(relation);
-    },
-  };
+  // Ahora delega al apiRepository en lugar de operar en memoria
+  return apiRepository;
 }
-
-// ─── Implementación REST — para cuando tengas backend ────────────────────────
-// export function createRestRepository(baseUrl: string): FamilyRepository {
-//   return {
-//     getAll: async () => {
-//       const res = await fetch(`${baseUrl}/family`);
-//       if (!res.ok) throw new Error("Failed to fetch");
-//       return res.json();
-//     },
-//     createPerson: async (data) => {
-//       const res = await fetch(`${baseUrl}/persons`, {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(data),
-//       });
-//       return res.json();
-//     },
-//     // ... resto de métodos
-//   };
-// }

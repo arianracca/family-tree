@@ -1,5 +1,5 @@
 import type { FamilyData } from "@/types/family";
-import { FAMILY_DATA } from "@/data/familyData";
+import { FAMILY_DATA } from "../../data/familyData";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // § 1. INTERFAZ DEL PROVIDER

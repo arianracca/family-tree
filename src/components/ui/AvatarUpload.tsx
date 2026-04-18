@@ -11,8 +11,8 @@ import { useTreeStore } from "@/store/useTreeStore";
 
 interface Props {
   personId: string;
-  nombre: string;
-  apellidoPaterno: string;
+  firstName: string;
+  lastName: string;
   currentPhotoUrl?: string | null;
 }
 
@@ -24,8 +24,8 @@ type UploadStatus = "idle" | "uploading" | "success" | "error";
 
 export default function AvatarUpload({
   personId,
-  nombre,
-  apellidoPaterno,
+  firstName,
+  lastName,
   currentPhotoUrl,
 }: Props) {
   const inputRef              = useRef<HTMLInputElement>(null);
@@ -71,8 +71,8 @@ export default function AvatarUpload({
     const formData = new FormData();
     formData.append("file",            file);
     formData.append("personId",        personId);
-    formData.append("nombre",          nombre);
-    formData.append("apellidoPaterno", apellidoPaterno);
+    formData.append("firstName", firstName);
+    formData.append("lastName",  lastName);
 
     try {
       const res  = await fetch("/api/upload-avatar", {
@@ -95,6 +95,30 @@ export default function AvatarUpload({
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Error al subir");
       setPreview(currentPhotoUrl ?? null);
+    }
+  }
+
+  // ── § 2.3.1 Upload ──────────────────────────────────────────────────────────
+  // handleRemoveAvatar borrar foto de Avatar
+    async function handleRemoveAvatar() {
+    setStatus("uploading");
+    setErrorMsg(null);
+    try {
+      const res  = await fetch("/api/upload-avatar", {
+        method:  "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ personId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Error desconocido");
+
+      updatePerson(personId, { photoUrl: null });
+      setPreview(null);
+      setStatus("success");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Error al eliminar");
     }
   }
 
@@ -123,16 +147,12 @@ export default function AvatarUpload({
       >
         <div className="avatar-upload__avatar">
           {preview ? (
-            <img
-              src={preview}
-              alt="Avatar"
-              className="avatar-upload__img"
-            />
+            <img src={preview} alt="Avatar" className="avatar-upload__img" />
           ) : (
-            <span className="avatar-upload__placeholder">
-              {nombre.charAt(0).toUpperCase()}
-              {apellidoPaterno.charAt(0).toUpperCase()}
-            </span>
+          <span className="avatar-upload__placeholder">
+            {(firstName ?? "?").charAt(0).toUpperCase()}
+            {(lastName  ?? "?").charAt(0).toUpperCase()}
+          </span>
           )}
         </div>
 
@@ -143,6 +163,19 @@ export default function AvatarUpload({
           }
         </div>
       </button>
+
+      {/* Botón de borrado — solo visible si hay foto */}
+      {preview && !isUploading && (
+        <button
+          className="avatar-upload__remove"
+          onClick={handleRemoveAvatar}
+          type="button"
+          aria-label="Eliminar foto de perfil"
+          title="Eliminar foto"
+        >
+          ×
+        </button>
+      )}
 
       <div className="avatar-upload__status" data-status={status}>
         {status === "idle"      && "Cambiar foto"}
@@ -162,6 +195,7 @@ export default function AvatarUpload({
 
 const avatarUploadStyles = `
   .avatar-upload {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -232,6 +266,31 @@ const avatarUploadStyles = `
     border-top-color: #c9a84c;
     border-radius: 50%;
     animation: spin 700ms linear infinite;
+  }
+
+  .avatar-upload__remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1a0a0a;
+    border: 1px solid #9a4a4a44;
+    color: #9a4a4a;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 150ms, color 150ms, background 150ms;
+  }
+
+  .avatar-upload__remove:hover {
+    background: #2a1010;
+    border-color: #9a4a4a;
+    color: #cc6666;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }

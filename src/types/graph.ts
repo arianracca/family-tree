@@ -5,10 +5,11 @@ import type { Node, Edge } from "@xyflow/react";
 // Data que lleva un PersonNode
 export interface PersonNodeData extends Record<string, unknown> {
   personId: string;
-  nombre: string;
-  apellidoPaterno: string;
-  apellidoMaterno?: string;
-  vivo: boolean;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  motherLastName?: string | null;
+  isAlive: boolean;
   generation: number;
   isHighlighted?: boolean;
   photoUrl?: string | null; 

@@ -15,20 +15,12 @@ import type { PersonNode as PersonNodeType } from "@/types/graph";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getInitials(nombre: string, apellido: string): string {
-  const first = nombre.trim().charAt(0).toUpperCase();
-  const last  = apellido.trim().charAt(0).toUpperCase();
-  return `${first}${last}`;
+function getInitials(firstName: string, lastName: string): string {
+  return firstName.trim().charAt(0).toUpperCase() + lastName.trim().charAt(0).toUpperCase();
 }
 
-function formatFullName(
-  nombre: string,
-  apellidoPaterno: string,
-  apellidoMaterno?: string
-): string {
-  return [nombre, apellidoPaterno, apellidoMaterno]
-    .filter(Boolean)
-    .join(" ");
+function formatFullName(firstName: string, middleName?: string | null, lastName?: string, motherLastName?: string | null): string {
+  return [firstName, middleName, lastName, motherLastName].filter(Boolean).join(" ");
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
@@ -37,15 +29,16 @@ type Props = NodeProps<PersonNodeType>;
 
 function PersonNode({ data, selected }: Props) {
   const {
-    nombre,
-    apellidoPaterno,
-    apellidoMaterno,
-    vivo,
+    firstName,
+    middleName,
+    lastName,
+    motherLastName,
+    isAlive,
     isHighlighted = true,
   } = data;
 
-  const initials  = getInitials(nombre, apellidoPaterno);
-  const fullName  = formatFullName(nombre, apellidoPaterno, apellidoMaterno);
+  const initials  = getInitials(firstName, lastName);
+  const fullName  = formatFullName(firstName, middleName, lastName, motherLastName);
   const isDimmed  = !isHighlighted;
 
   return (
@@ -60,24 +53,18 @@ function PersonNode({ data, selected }: Props) {
 
       <div
         data-selected={selected}
-        data-alive={vivo}
+        data-alive={isAlive}
         data-dimmed={isDimmed}
         className="person-node"
       >
         {/* Avatar con iniciales o foto */}
         <div className="person-node__avatar">
           {data.photoUrl ? (
-            <img
-              src={data.photoUrl}
-              alt={data.nombre}
-              className="person-node__photo"
-            />
+            <img src={data.photoUrl} alt={firstName} className="person-node__photo" />
           ) : (
             <span className="person-node__initials">{initials}</span>
           )}
-          {!data.vivo && (
-            <span className="person-node__deceased-icon">†</span>
-          )}
+          {!isAlive && <span className="person-node__deceased-icon">†</span>}
         </div>
 
         {/* Info */}

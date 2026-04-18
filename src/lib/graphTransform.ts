@@ -92,13 +92,14 @@ export function transformToReactFlow(
       if (!personPos || !personMeta) continue;
 
       const personNodeData: PersonNodeData = {
-        personId: person.id,
-        nombre: person.nombre,
-        apellidoPaterno: person.apellidoPaterno,
-        apellidoMaterno: person.apellidoMaterno,
-        vivo: person.vivo,
-        generation: person.generation,
-        photoUrl: person.photoUrl ?? null,
+        personId:    person.id,
+        firstName:   person.firstName,
+        middleName:  person.middleName ?? null,
+        lastName:    person.lastName,
+        motherLastName: person.motherLastName ?? null,
+        isAlive:     person.isAlive,
+        generation:  person.generation,
+        photoUrl:    person.photoUrl ?? null,
       };
 
       nodes.push({
@@ -131,13 +132,14 @@ export function transformToReactFlow(
     if (!pos || !meta) continue;
 
     const personNodeData: PersonNodeData = {
-      personId: person.id,
-      nombre: person.nombre,
-      apellidoPaterno: person.apellidoPaterno,
-      apellidoMaterno: person.apellidoMaterno,
-      vivo: person.vivo,
-      generation: person.generation,
-      photoUrl: person.photoUrl ?? null,
+      personId:    person.id,
+      firstName:   person.firstName,
+      middleName:  person.middleName ?? null,
+      lastName:    person.lastName,
+      motherLastName: person.motherLastName ?? null,
+      isAlive:     person.isAlive,
+      generation:  person.generation,
+      photoUrl:    person.photoUrl ?? null,
     };
 
     nodes.push({
