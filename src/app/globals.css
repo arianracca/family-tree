@@ -1,3 +1,79 @@
+/* ─── Design Tokens ──────────────────────────────────────────────────────────
+   Fuente única de verdad para todos los valores visuales del proyecto.
+   Para cambiar el color dorado en toda la app: modificar --color-gold aquí.
+   Para agregar un tema oscuro/claro en el futuro: redefinir estas variables
+   dentro de [data-theme="light"] { } sin tocar ningún componente.
+────────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Paleta base ── */
+  --color-bg-canvas:      #080808;   /* fondo del canvas principal */
+  --color-bg-primary:     #0d0d0d;   /* fondo del panel lateral */
+  --color-bg-node:        #0f0f0f;   /* fondo de PersonNode */
+  --color-bg-couple:      #0a0a0a;   /* fondo de CoupleNode */
+  --color-bg-input:       #111111;   /* fondo de inputs y selects */
+  --color-bg-chip:        #1a1a1a;   /* fondo de chips (nacionalidades) */
+  --color-bg-delete:      #120808;   /* fondo del confirm de borrado */
+  --color-bg-error:       #1a0a0a;   /* fondo de mensajes de error */
+
+  /* ── Acento dorado ── */
+  --color-gold:           #c9a84c;
+  --color-gold-10:        #c9a84c1a; /* 10% opacidad */
+  --color-gold-20:        #c9a84c33; /* 20% opacidad */
+  --color-gold-25:        #c9a84c40; /* 25% opacidad */
+  --color-gold-40:        #c9a84c66; /* 40% opacidad */
+  --color-gold-50:        #c9a84c80; /* 50% opacidad */
+  --color-gold-55:        #c9a84c88; /* 55% opacidad */
+
+  /* ── Bordes ── */
+  --color-border-subtle:  #161616;   /* bordes casi invisibles */
+  --color-border-dim:     #1a1a1a;   /* bordes muy tenues */
+  --color-border-default: #222222;   /* borde estándar de inputs y botones */
+  --color-border-mid:     #2a2a2a;   /* borde de nodos y chips */
+  --color-border-strong:  #444444;   /* borde en hover de controles */
+  --color-border-danger:  #9a4a4a;   /* borde de acciones destructivas */
+  --color-border-gold:    #c9a84c22; /* borde dorado sutil para parejas */
+
+  /* ── Texto ── */
+  --color-text-primary:   #e8e8e8;   /* texto principal */
+  --color-text-secondary: #d0d0d0;   /* texto secundario */
+  --color-text-tertiary:  #aaaaaa;   /* texto de valores en FieldRow */
+  --color-text-muted:     #888888;   /* texto de hints y toggles */
+  --color-text-dim:       #666666;   /* texto de fallecidos */
+  --color-text-faint:     #555555;   /* texto de iconos y placeholders */
+  --color-text-ghost:     #444444;   /* texto casi invisible */
+  --color-text-dead:      #383838;   /* roles en PersonRow */
+  --color-text-invisible: #2a2a2a;   /* flechas en reposo */
+  --color-text-success:   #6a9a6a;   /* estado de éxito en upload */
+  --color-text-danger:    #9a4a4a;   /* texto de acciones destructivas */
+  --color-text-gold:      #c9a84c;   /* iniciales, acentos, labels */
+
+  /* ── Tipografía ── */
+  --font-serif:           'Georgia', 'Times New Roman', serif;
+
+  /* ── Radios de borde ── */
+  --radius-sm:            4px;
+  --radius-md:            6px;
+  --radius-lg:            8px;
+  --radius-pill:          12px;
+  --radius-full:          50%;
+
+  /* ── Transiciones ── */
+  --transition-fast:      150ms ease;
+  --transition-base:      200ms ease;
+  --transition-slow:      250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Dimensiones del panel lateral ── */
+  --panel-width:          300px;
+
+  /* ── Sombras ── */
+  --shadow-node:          0 4px 20px #00000088;
+  --shadow-node-selected: 0 0 0 1px #c9a84c22, 0 4px 20px #00000088;
+  --shadow-add-btn:       0 4px 20px #00000066;
+}
+
+/* ─── Reset global ───────────────────────────────────────────────────────────*/
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -8,8 +84,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #080808;
-  color: #e8e8e8;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
