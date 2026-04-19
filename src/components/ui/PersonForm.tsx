@@ -39,8 +39,7 @@ function Field({
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function PersonForm({ mode, personId, onSuccess, onCancel }: Props) {
-  const persons   = useFamilyStore((s) => s.familyData.persons);
-  const relations = useFamilyStore((s) => s.familyData.relations);
+  const persons = useFamilyStore((s) => s.familyData.persons);
 
   const {
   formData, isSubmitting, error,

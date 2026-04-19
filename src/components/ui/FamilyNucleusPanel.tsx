@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTreeStore } from "@/store/useTreeStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import AvatarUpload from "@/components/ui/AvatarUpload";
 import PersonForm from "@/components/ui/PersonForm";
-import { createLocalRepository } from "@/lib/familyRepository";
+import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyNucleus, Person } from "@/types/family";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -151,31 +151,10 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 // ── Store ──────────────────────────────────────────────────────────────────
-const persons        = useFamilyStore((s) => s.familyData.persons);
-const relations      = useFamilyStore((s) => s.familyData.relations);
-const clearSelection = useFamilyStore((s) => s.clearSelection);
-const clearHighlight = useTreeStore((s) => s.clearHighlight);
-
-// Acciones atómicas — referencias estables, no generan objeto nuevo en cada render
-const addPerson      = useFamilyStore((s) => s.addPerson);
-const updatePerson   = useFamilyStore((s) => s.updatePerson);
-const removePerson   = useFamilyStore((s) => s.removePerson);
-const addRelation    = useFamilyStore((s) => s.addRelation);
-const removeRelation = useFamilyStore((s) => s.removeRelation);
-const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
-
-
-// Repository estable — useMemo garantiza que no se recrea en cada render
-const repository = useMemo(
-  () => createLocalRepository(
-    () => useFamilyStore.getState().familyData
-      ? { familyData: useFamilyStore.getState().familyData }
-      : { familyData: { persons, relations } },
-    { addPerson, updatePerson, removePerson, addRelation, removeRelation }
-  ),
-  // Solo se recrea si cambian las acciones (no cambian nunca en Zustand)
-  [addPerson, updatePerson, removePerson, addRelation, removeRelation]
-);
+  const persons        = useFamilyStore((s) => s.familyData.persons);
+  const clearSelection = useFamilyStore((s) => s.clearSelection);
+  const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
+  const clearHighlight = useTreeStore((s) => s.clearHighlight);
 
   // ── Derivaciones ───────────────────────────────────────────────────────────
   const person      = persons.find((p) => p.id === personId);
@@ -196,10 +175,10 @@ const repository = useMemo(
   }, [clearSelection, clearHighlight]);
 
   async function handleDelete() {
-  await repository.deletePerson(personId);
-  await loadFamilyData();
-  handleClose();
-}
+      await activeRepository.deletePerson(personId);
+      await loadFamilyData();
+      handleClose();
+    }
 
   // ── Guard ──────────────────────────────────────────────────────────────────
   if (!person) return null;

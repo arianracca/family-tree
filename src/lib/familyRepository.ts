@@ -86,20 +86,3 @@ const apiRepository: FamilyRepository = {
 // Para cambiar a REST: export const activeRepository = createRestRepository("https://api.tudominio.com");
 
 export const activeRepository: FamilyRepository = apiRepository;
-
-// ─── Helper para hooks y componentes ─────────────────────────────────────────
-// Mantiene compatibilidad con el código existente que usaba createLocalRepository
-
-export function createLocalRepository(
-  _getState: () => { familyData: FamilyData },
-  _actions: {
-    addPerson:      (p: Person) => void;
-    updatePerson:   (id: string, updates: Partial<Person>) => void;
-    removePerson:   (id: string) => void;
-    addRelation:    (r: Relation) => void;
-    removeRelation: (r: Relation) => void;
-  }
-): FamilyRepository {
-  // Ahora delega al apiRepository en lugar de operar en memoria
-  return apiRepository;
-}
