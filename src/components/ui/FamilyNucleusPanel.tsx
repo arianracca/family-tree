@@ -9,10 +9,13 @@ import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyNucleus, Person } from "@/types/family";
 import panelStyles from "@/components/ui/panel.module.css";
 import styles from "@/components/ui/FamilyNucleusPanel.module.css";
+import FieldRow from "@/components/ui/primitives/FieldRow";
+import IconButton from "@/components/ui/primitives/IconButton";
+import PanelHeader from "@/components/ui/primitives/PanelHeader";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type PanelMode = "view" | "edit";
+type PanelMode = "view" | "edit" | "create";
 
 interface PersonRowProps {
   personId: string;
@@ -90,18 +93,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// ─── FieldRow — para mostrar campos estándar y custom ─────────────────────────
-
-function FieldRow({ label, value }: { label: string; value: string }) {
-  if (!value?.trim()) return null;
-  return (
-    <div className={styles.fieldRow}>
-      <span className={styles.fieldLabel}>{label}</span>
-      <span className={styles.fieldValue}>{value}</span>
-    </div>
-  );
-}
-
 // ─── DeleteConfirm ────────────────────────────────────────────────────────────
 
 function DeleteConfirm({
@@ -116,7 +107,7 @@ function DeleteConfirm({
   return (
     <div className={styles.deleteConfirm}>
       <p className={styles.deleteText}>
-        ¿Eliminar a <strong>{personName}</strong>? Se borrarán todas sus relaciones.
+        ¿Eliminar a <strong>{personName}</strong>? Se borrarán también todas sus relaciones.
       </p>
       <div className={styles.deleteActions}>
         <button
@@ -141,17 +132,21 @@ function DeleteConfirm({
 // ─── Panel principal ──────────────────────────────────────────────────────────
 
 interface Props {
-  nucleus: FamilyNucleus;
+  nucleus?:     FamilyNucleus;
+  initialMode?: PanelMode;
+  onClose?:     () => void;
 }
 
-export default function FamilyNucleusPanel({ nucleus }: Props) {
-  const { personId, coupleIds, parentIdsA, parentIdsB, childrenIds } = nucleus;
+export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onClose }: Props) {
+  const { personId, coupleIds, parentIdsA, parentIdsB, childrenIds } = nucleus ?? {
+    personId: "", coupleIds: null, parentIdsA: [], parentIdsB: [], childrenIds: [],
+  };
 
-  const [mode,           setMode]           = useState<PanelMode>("view");
+  const [mode, setMode] = useState<PanelMode>(initialMode);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 // ── Store ──────────────────────────────────────────────────────────────────
-  const persons        = useFamilyStore((s) => s.familyData.persons);
+  const persons = useFamilyStore((s) => s.familyData.persons);
   const clearSelection = useFamilyStore((s) => s.clearSelection);
   const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
   const clearHighlight = useTreeStore((s) => s.clearHighlight);
@@ -180,7 +175,26 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
       handleClose();
     }
 
-  // ── Guard ──────────────────────────────────────────────────────────────────
+// ── Render: modo create ───────────────────────────────────────────────────
+  if (mode === "create") {
+    return (
+      <aside className={panelStyles.panel}>
+        <PanelHeader label="Nueva persona" title="Agregar al árbol">
+          <IconButton onClick={() => onClose?.()} label="Cerrar panel" variant="close">✕</IconButton>
+        </PanelHeader>
+        <div className={panelStyles.divider} />
+        <div className={panelStyles.formWrapper}>
+          <PersonForm
+            mode="create"
+            onSuccess={() => onClose?.()}
+            onCancel={() => onClose?.()}
+          />
+        </div>
+      </aside>
+    );
+  }
+
+  // ── Guard — solo aplica a view y edit ─────────────────────────────────────
   if (!person) return null;
 
   const name = fullName(person);
@@ -189,19 +203,11 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
   if (mode === "edit") {
     return (
       <aside className={panelStyles.panel}>
-        <div className={panelStyles.header}>
-          <div className={panelStyles.titleGroup}>
-            <span className={panelStyles.label}>Editando</span>
-            <h2 className={panelStyles.title}>{name}</h2>
-          </div>
-          <button
-            className={panelStyles.closeBtn}
-            onClick={() => setMode("view")}
-            type="button"
-          >✕</button>
-        </div>
+        <PanelHeader label="Editando" title={name}>
+          <IconButton onClick={() => setMode("view")} label="Cerrar edición" variant="close">✕</IconButton>
+        </PanelHeader>
         <div className={panelStyles.divider} />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div className={panelStyles.formWrapper}>
           <PersonForm
             mode="edit"
             personId={personId}
@@ -217,33 +223,24 @@ export default function FamilyNucleusPanel({ nucleus }: Props) {
 return (
   <aside className={panelStyles.panel}>
 
-    <div className={panelStyles.header}>
-      <div className={panelStyles.titleGroup}>
-        <span className={panelStyles.label}>Núcleo familiar</span>
-        <h2 className={panelStyles.title}>{name}</h2>
-      </div>
-      <div className={panelStyles.headerActions}>
-        <button
-          className={panelStyles.iconBtn}
-          onClick={() => { setMode("edit"); setShowDeleteConfirm(false); }}
-          type="button"
-          aria-label="Editar persona"
-          title="Editar"
-        >✎</button>
-        <button
-          className={`${panelStyles.iconBtn} ${panelStyles.iconBtnDanger}`}
-          onClick={() => setShowDeleteConfirm((v) => !v)}
-          type="button"
-          aria-label="Eliminar persona"
-          title="Eliminar"
-        >🗑</button>
-        <button
-          className={panelStyles.closeBtn}
-          onClick={handleClose}
-          type="button"
-        >✕</button>
-      </div>
-    </div>
+    <PanelHeader label="Núcleo familiar" title={name}>
+      <IconButton
+        onClick={() => { setMode("edit"); setShowDeleteConfirm(false); }}
+        label="Editar persona"
+        title="Editar"
+      >✎</IconButton>
+      <IconButton
+        onClick={() => setShowDeleteConfirm((v) => !v)}
+        label="Eliminar persona"
+        title="Eliminar"
+        variant="danger"
+      >🗑</IconButton>
+      <IconButton
+        onClick={handleClose}
+        label="Cerrar panel"
+        variant="close"
+      >✕</IconButton>
+    </PanelHeader>
 
     <div className={panelStyles.divider} />
 

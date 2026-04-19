@@ -6,8 +6,6 @@ import { Suspense, lazy } from "react";
 import TreeCanvas from "./TreeCanvas";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useFamilyNucleus } from "@/hooks/useFamilyNucleus";
-import PersonForm from "@/components/ui/PersonForm";
-import { useTreeStore } from "@/store/useTreeStore";
 import panelStyles from "@/components/ui/panel.module.css";
 import styles from "@/components/tree/FamilyTree.module.css";
 
@@ -25,26 +23,6 @@ function NucleusController() {
     <Suspense fallback={<PanelSkeleton />}>
       <FamilyNucleusPanel nucleus={nucleus} />
     </Suspense>
-  );
-}
-
-// ─── CreatePanel ──────────────────────────────────────────────────────────────
-
-function CreatePanel({ onClose }: { onClose: () => void }) {
-  return (
-    <aside className={panelStyles.panel}>
-      <div className={panelStyles.header}>
-        <div className={panelStyles.titleGroup}>
-          <span className={panelStyles.label}>Nueva persona</span>
-          <h2 className={panelStyles.title}>Agregar al árbol</h2>
-        </div>
-        <button className={panelStyles.closeBtn} onClick={onClose} type="button">✕</button>
-      </div>
-      <div className={panelStyles.divider} />
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <PersonForm mode="create" onSuccess={onClose} onCancel={onClose} />
-      </div>
-    </aside>
   );
 }
 
@@ -73,7 +51,6 @@ export default function FamilyTree() {
     loadFamilyData();
   }, [loadFamilyData]);
 
-  // Cerrar create panel si el usuario selecciona una persona
   useEffect(() => {
     if (selectedPersonId) setShowCreatePanel(false);
   }, [selectedPersonId]);
@@ -92,29 +69,28 @@ export default function FamilyTree() {
     <ReactFlowProvider>
       <div className={styles.container}>
 
-        {/* Canvas */}
         <div className={styles.canvas} data-panel-open={panelOpen}>
           <TreeCanvas />
         </div>
 
-        {/* Panel lateral — create tiene prioridad sobre nucleus */}
-        {showCreatePanel
-          ? <CreatePanel onClose={() => setShowCreatePanel(false)} />
-          : <NucleusController />
-        }
+        {showCreatePanel ? (
+          <Suspense fallback={<PanelSkeleton />}>
+            <FamilyNucleusPanel
+              initialMode="create"
+              onClose={() => setShowCreatePanel(false)}
+            />
+          </Suspense>
+        ) : (
+          <NucleusController />
+        )}
 
-        {/* Botón + — abajo a la izquierda */}
         <button
           className={styles.addBtn}
-          onClick={() => {
-            setShowCreatePanel(true);
-          }}
+          onClick={() => setShowCreatePanel(true)}
           type="button"
           aria-label="Agregar persona"
           title="Agregar persona al árbol"
-        >
-          +
-        </button>
+        >+</button>
 
       </div>
     </ReactFlowProvider>

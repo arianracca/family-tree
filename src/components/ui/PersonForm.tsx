@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { usePersonForm } from "@/hooks/usePersonForm";
 import GenerationPicker from "@/components/ui/GenerationPicker";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import type { FormMode } from "@/hooks/usePersonForm";
 import styles from "@/components/ui/PersonForm.module.css";
+import Toggle from "@/components/ui/primitives/Toggle";
+import ChipInput from "@/components/ui/primitives/ChipInput";
+import SectionTitle from "@/components/ui/primitives/SectionTitle";
 
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -18,10 +20,6 @@ interface Props {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className={styles.sectionTitle}>{children}</h3>;
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -44,15 +42,6 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
   addCustomField, updateCustomField, removeCustomField,
   submit, reset,
 } = usePersonForm({ mode, personId, onSuccess });
-
-  // ── Nacionalidad input local ──────────────────────────────────────────────
-const [nationalityInput, setNationalityInput] = useState("");
-
-  function handleAddNationality() {
-    if (!nationalityInput.trim()) return;
-    addNationality(nationalityInput);
-    setNationalityInput("");
-  }
 
   // ── Personas disponibles para relaciones ──────────────────────────────────
   // Excluye a la persona que se está editando
@@ -107,19 +96,11 @@ const [nationalityInput, setNationalityInput] = useState("");
         </Field>
 
         <Field label="¿Está vivo?">
-          <div className={styles.toggleRow}>
-            <button
-              type="button"
-              className={styles.toggle}
-              data-active={formData.isAlive}
-              onClick={() => setField("isAlive", !formData.isAlive)}
-            >
-              <span className={styles.toggleKnob} />
-            </button>
-            <span className={styles.toggleLabel}>
-              {formData.isAlive ? "Sí" : "No"}
-            </span>
-          </div>
+          <Toggle
+            value={formData.isAlive}
+            onChange={(v) => setField("isAlive", v)}
+            label={formData.isAlive ? "Sí" : "No"}
+          />
         </Field>
 
         <SectionTitle>Origen y fechas</SectionTitle>
@@ -163,34 +144,13 @@ const [nationalityInput, setNationalityInput] = useState("");
         )}
 
         <Field label="Nacionalidades">
-          <div className={styles.chips}>
-            {formData.nationalities.map((n, i) => (
-              <span key={i} className={styles.chip}>
-                {n}
-                <button
-                  type="button"
-                  className={styles.chipRemove}
-                  onClick={() => removeNationality(i)}
-                >×</button>
-              </span>
-            ))}
-          </div>
-          <div className={styles.chipInputRow}>
-            <input
-              className={styles.input}
-              value={nationalityInput}
-              onChange={(e) => setNationalityInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); handleAddNationality(); }
-              }}
-              placeholder="Ej: Argentina — Enter para agregar"
-            />
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnGhost}`}
-              onClick={handleAddNationality}
-            >+</button>
-          </div>
+          <ChipInput
+            values={formData.nationalities}
+            onAdd={addNationality}
+            onRemove={removeNationality}
+            placeholder="Ej: Argentina — Enter para agregar"
+            inputClassName={styles.input}
+          />
         </Field>
 
         <SectionTitle>Generación *</SectionTitle>
@@ -221,19 +181,11 @@ const [nationalityInput, setNationalityInput] = useState("");
 
         {formData.coupleId && (
           <Field label="¿Pareja activa?">
-            <div className={styles.toggleRow}>
-              <button
-                type="button"
-                className={styles.toggle}
-                data-active={formData.coupleActive}
-                onClick={() => setField("coupleActive", !formData.coupleActive)}
-              >
-                <span className={styles.toggleKnob} />
-              </button>
-              <span className={styles.toggleLabel}>
-                {formData.coupleActive ? "Sí" : "No"}
-              </span>
-            </div>
+            <Toggle
+              value={formData.coupleActive}
+              onChange={(v) => setField("coupleActive", v)}
+              label={formData.coupleActive ? "Sí" : "No"}
+            />
           </Field>
         )}
 

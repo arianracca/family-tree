@@ -1,0 +1,30 @@
+.btn {
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms, color 150ms;
+  flex-shrink: 0;
+}
+
+.btn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-gold);
+}
+
+.btn[data-variant='danger']:hover {
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
+}
+
+.btn[data-variant='close']:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
