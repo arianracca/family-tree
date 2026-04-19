@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { PersonNode as PersonNodeType } from "@/types/graph";
+import styles from "./PersonNode.module.css";
+
 
 /*
     Los puntos clave:
@@ -55,21 +57,21 @@ function PersonNode({ data, selected }: Props) {
         data-selected={selected}
         data-alive={isAlive}
         data-dimmed={isDimmed}
-        className="person-node"
+        className={styles.node}
       >
         {/* Avatar con iniciales o foto */}
-        <div className="person-node__avatar">
+      <div className={styles.avatar}>
           {data.photoUrl ? (
-            <img src={data.photoUrl} alt={firstName} className="person-node__photo" />
+            <img src={data.photoUrl} alt={firstName} className={styles.photo} />
           ) : (
-            <span className="person-node__initials">{initials}</span>
+            <span className={styles.initials}>{initials}</span>
           )}
-          {!isAlive && <span className="person-node__deceased-icon">†</span>}
-        </div>
+          {!isAlive && <span className={styles.deceasedIcon}>†</span>}
+      </div>
 
         {/* Info */}
-        <div className="person-node__info">
-          <span className="person-node__name">{fullName}</span>
+        <div className={styles.info}>
+          <span className={styles.name}>{fullName}</span>
         </div>
       </div>
 
@@ -80,161 +82,6 @@ function PersonNode({ data, selected }: Props) {
         id="bottom"
         style={{ visibility: "hidden" }}
       />
-
-      <style>{`
-        .person-node {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 180px;
-          height: 80px;
-          padding: 10px 14px;
-          background: #0f0f0f;
-          border: 1px solid #2a2a2a;
-          border-radius: 6px;
-          cursor: pointer;
-          transition:
-            border-color 150ms ease,
-            box-shadow   150ms ease,
-            opacity      200ms ease;
-          box-sizing: border-box;
-          font-family: 'Georgia', 'Times New Roman', serif;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .person-node__photo {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          object-fit: cover;
-          object-position: center top;
-        }
-
-        /* Línea de acento izquierda */
-        .person-node::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 3px;
-          background: #c9a84c;
-          opacity: 0;
-          transition: opacity 150ms ease;
-        }
-
-        .person-node[data-alive='true']::before  { background: #c9a84c; }
-        .person-node[data-alive='false']::before { background: #555; }
-
-        .person-node__photo {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          object-fit: cover;
-          object-position: center top;
-        }
-
-        /* Estados */
-        .person-node:hover,
-        .person-node[data-selected='true'] {
-          border-color: #c9a84c;
-          box-shadow: 0 0 0 1px #c9a84c22, 0 4px 20px #00000088;
-        }
-
-        .person-node:hover::before,
-        .person-node[data-selected='true']::before {
-          opacity: 1;
-        }
-
-        .person-node[data-alive='false'] {
-          border-color: #1e1e1e;
-        }
-
-        .person-node[data-alive='false']:hover,
-        .person-node[data-alive='false'][data-selected='true'] {
-          border-color: #555;
-          box-shadow: 0 0 0 1px #55555522, 0 4px 20px #00000088;
-        }
-
-        /* Dimmed — cuando otro núcleo está activo */
-        .person-node[data-dimmed='true'] {
-          opacity: 0.25;
-          pointer-events: none;
-        }
-
-        /* Avatar */
-        .person-node__avatar {
-          position: relative;
-          flex-shrink: 0;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: #1a1a1a;
-          border: 1px solid #2a2a2a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .person-node[data-alive='true'] .person-node__avatar {
-          border-color: #c9a84c44;
-        }
-
-        /* Iniciales */
-        .person-node__initials {
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-          color: #c9a84c;
-          line-height: 1;
-          font-family: 'Georgia', serif;
-        }
-
-        .person-node[data-alive='false'] .person-node__initials {
-          color: #555;
-        }
-
-        /* Ícono fallecido */
-        .person-node__deceased-icon {
-          position: absolute;
-          bottom: -2px;
-          right: -2px;
-          font-size: 10px;
-          color: #555;
-          background: #0f0f0f;
-          border-radius: 50%;
-          width: 14px;
-          height: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        /* Info */
-        .person-node__info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-        }
-
-        .person-node__name {
-          font-size: 12px;
-          font-weight: 500;
-          color: #e8e8e8;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          letter-spacing: 0.01em;
-        }
-
-        .person-node[data-alive='false'] .person-node__name {
-          color: #666;
-        }
-      `}</style>
     </>
   );
 }

@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CoupleNode as CoupleNodeType } from "@/types/graph";
+import styles from "./CoupleNode.module.css";
+
 
 /*
     Los puntos clave:
@@ -35,7 +37,7 @@ function CoupleNode({ data, selected }: Props) {
         data-selected={selected}
         data-active={active}
         data-dimmed={isDimmed}
-        className="couple-node"
+        className={styles.node}
       >
         {/*
           El conector visual entre los dos PersonNodes.
@@ -43,7 +45,7 @@ function CoupleNode({ data, selected }: Props) {
           que simula la línea de pareja dentro del compound.
         */}
         <div
-          className="couple-node__connector"
+          className={styles.connector}
           data-active={active}
           aria-hidden="true"
         />
@@ -63,102 +65,6 @@ function CoupleNode({ data, selected }: Props) {
         id="bottom"
         style={{ visibility: "hidden" }}
       />
-
-      <style>{`
-        .couple-node {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          border-radius: 8px;
-          border: 1px solid #1e1e1e;
-          background: #0a0a0a;
-          transition:
-            border-color 150ms ease,
-            box-shadow   150ms ease,
-            opacity      200ms ease;
-          box-sizing: border-box;
-        }
-
-        /* Activa: borde sutil dorado */
-        .couple-node[data-active='true'] {
-          border-color: #c9a84c22;
-        }
-
-        /* Inactiva: borde gris muy tenue */
-        .couple-node[data-active='false'] {
-          border-color: #1a1a1a;
-        }
-
-        /* Seleccionado */
-        .couple-node[data-selected='true'] {
-          border-color: #c9a84c44;
-          box-shadow: 0 0 0 1px #c9a84c11, 0 8px 32px #00000099;
-        }
-
-        /* Dimmed */
-        .couple-node[data-dimmed='true'] {
-          opacity: 0.2;
-          pointer-events: none;
-        }
-
-        /* Conector decorativo entre los dos PersonNodes */
-        .couple-node__connector {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 24px;
-          height: 1px;
-          z-index: 1;
-          pointer-events: none;
-        }
-
-        /* Pareja activa: línea sólida dorada */
-        .couple-node__connector[data-active='true'] {
-          background: #c9a84c88;
-        }
-
-        /* Pareja inactiva: línea punteada gris */
-        .couple-node__connector[data-active='false'] {
-          background: none;
-          border-top: 1px dashed #444;
-        }
-
-        /* Esquinas decorativas — marca los bordes del compound */
-        .couple-node::before,
-        .couple-node::after {
-          content: '';
-          position: absolute;
-          width: 6px;
-          height: 6px;
-          pointer-events: none;
-          transition: opacity 150ms ease;
-          opacity: 0;
-        }
-
-        .couple-node::before {
-          top: -1px;
-          left: -1px;
-          border-top: 1px solid #c9a84c;
-          border-left: 1px solid #c9a84c;
-          border-radius: 2px 0 0 0;
-        }
-
-        .couple-node::after {
-          bottom: -1px;
-          right: -1px;
-          border-bottom: 1px solid #c9a84c;
-          border-right: 1px solid #c9a84c;
-          border-radius: 0 0 2px 0;
-        }
-
-        .couple-node[data-active='true']:hover::before,
-        .couple-node[data-active='true']:hover::after,
-        .couple-node[data-active='true'][data-selected='true']::before,
-        .couple-node[data-active='true'][data-selected='true']::after {
-          opacity: 1;
-        }
-      `}</style>
     </>
   );
 }

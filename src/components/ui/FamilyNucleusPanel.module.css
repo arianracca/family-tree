@@ -1,0 +1,251 @@
+/* ─── Delete confirm ─────────────────────────────────────────────────────────*/
+
+.deleteConfirm {
+  padding: 14px 16px;
+  background: var(--color-bg-delete);
+  border-bottom: 1px solid #2a1010;
+  flex-shrink: 0;
+}
+
+.deleteText {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.deleteText strong { color: var(--color-text-primary); }
+
+.deleteActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ─── Botones del panel ──────────────────────────────────────────────────────*/
+
+.btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all var(--transition-fast);
+}
+
+.btnGhost {
+  background: none;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-faint);
+}
+
+.btnGhost:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.btnDanger {
+  background: var(--color-bg-delete);
+  border: 1px solid #9a4a4a44;
+  color: var(--color-text-danger);
+}
+
+.btnDanger:hover {
+  background: #3a1010;
+  border-color: var(--color-border-danger);
+}
+
+/* ─── Sección de avatar ──────────────────────────────────────────────────────*/
+
+.avatarSection {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 4px;
+  flex-shrink: 0;
+}
+
+/* ─── Historia ───────────────────────────────────────────────────────────────*/
+
+.history {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ─── Estado vacío ───────────────────────────────────────────────────────────*/
+
+.empty {
+  font-size: 12px;
+  color: var(--color-text-ghost);
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ─── Sections ───────────────────────────────────────────────────────────────*/
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  font-weight: 400;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ─── FieldRow ───────────────────────────────────────────────────────────────*/
+
+.fieldRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #0f0f0f;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  color: var(--color-text-ghost);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.fieldValue {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ─── PersonRow ──────────────────────────────────────────────────────────────*/
+
+.personRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  text-align: left;
+}
+
+.personRow:hover {
+  background: var(--color-bg-input);
+  border-color: var(--color-border-dim);
+}
+
+.personRow[data-role='partner']:hover {
+  border-color: var(--color-border-gold);
+}
+
+.personRowAvatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: #141414;
+  border: 1px solid var(--color-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.personRow[data-role='partner'] .personRowAvatar {
+  border-color: #c9a84c33;
+}
+
+.personRowPhoto {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  object-position: center top;
+}
+
+.personRowInitials {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-gold);
+  letter-spacing: 0.04em;
+}
+
+.personRow[data-alive='false'] .personRowInitials {
+  color: var(--color-text-ghost);
+}
+
+.personRowDeceased {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 9px;
+  color: var(--color-text-ghost);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-full);
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.personRowInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personRowName {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.personRow[data-alive='false'] .personRowName {
+  color: var(--color-text-faint);
+}
+
+.personRowRole {
+  font-size: 10px;
+  color: var(--color-text-dead);
+  letter-spacing: 0.04em;
+}
+
+.personRowArrow {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-invisible);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.personRow:hover .personRowArrow {
+  color: var(--color-gold-55);
+  transform: translateX(2px);
+}
