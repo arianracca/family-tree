@@ -1,36 +1,48 @@
 import type { Person } from "@/types/family";
 
-// ─── Tipos exportados que GenerationPicker necesita ──────────────────────────
+// ─── Exported types needed by GenerationPicker ──────────────────────────
 
 export type RelationshipType =
-  | "hijo/a de"
-  | "padre/madre de"
-  | "pareja de"
-  | "misma generación que"
-  | "sobrino/a de"
-  | "tío/a de"
-  | "primo/a de";
+  | "child of"
+  | "parent of"
+  | "partner of"
+  | "same generation as"
+  | "nephew/niece of"
+  | "uncle/aunt of"
+  | "cousin of";
 
 export const RELATIONSHIP_OPTIONS: RelationshipType[] = [
-  "hijo/a de",
-  "padre/madre de",
-  "pareja de",
-  "misma generación que",
-  "sobrino/a de",
-  "tío/a de",
-  "primo/a de",
+  "child of",
+  "parent of",
+  "partner of",
+  "same generation as",
+  "nephew/niece of",
+  "uncle/aunt of",
+  "cousin of",
 ];
 
-// ─── Delta de generación por tipo de relación ────────────────────────────────
+// ─── Labels por idioma (preparado para i18n) ──────────────────────────────
+
+export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
+  "child of":           "Hijo/a de",
+  "parent of":          "Padre/Madre de",
+  "partner of":         "Pareja de",
+  "same generation as": "Misma generación que",
+  "nephew/niece of":    "Sobrino/a de",
+  "uncle/aunt of":      "Tío/a de",
+  "cousin of":          "Primo/a de",
+};
+
+// ─── Generation delta by relationship type ────────────────────────────────
 
 const GENERATION_DELTA: Record<RelationshipType, number> = {
-  "hijo/a de":           +1,
-  "padre/madre de":      -1,
-  "pareja de":            0,
-  "misma generación que": 0,
-  "sobrino/a de":        +1,
-  "tío/a de":            -1,
-  "primo/a de":           0,
+  "child of":           +1,
+  "parent of":          -1,
+  "partner of":          0,
+  "same generation as":  0,
+  "nephew/niece of":    +1,
+  "uncle/aunt of":      -1,
+  "cousin of":           0,
 };
 
 export function resolveGeneration(

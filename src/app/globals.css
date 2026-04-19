@@ -15,6 +15,10 @@
   --color-bg-chip:        #1a1a1a;   /* fondo de chips (nacionalidades) */
   --color-bg-delete:      #120808;   /* fondo del confirm de borrado */
   --color-bg-error:       #1a0a0a;   /* fondo de mensajes de error */
+  --color-bg-overlay:     #080808ee;  /* overlay de carga con transparencia */
+  --color-danger-light:   #c97a7a;    /* rojo claro para hover de peligro */
+
+
 
   /* ── Acento dorado ── */
   --color-gold:           #c9a84c;

@@ -9,6 +9,50 @@ import Toggle from "@/components/ui/primitives/Toggle";
 import ChipInput from "@/components/ui/primitives/ChipInput";
 import SectionTitle from "@/components/ui/primitives/SectionTitle";
 
+const UI = {
+  sectionBasic:       "Datos básicos",
+  sectionOrigin:      "Origen y fechas",
+  sectionGeneration:  "Generación *",
+  sectionRelations:   "Relaciones",
+  sectionCustom:      "Campos personalizados",
+  firstName:          "Nombre *",
+  middleName:         "Segundos nombres",
+  lastName:           "Apellido *",
+  motherLastName:     "Apellido materno",
+  isAlive:            "¿Está vivo?",
+  yes:                "Sí",
+  no:                 "No",
+  birthPlace:         "Lugar de nacimiento",
+  city:               "Ciudad de residencia",
+  birthDate:          "Fecha de nacimiento",
+  deathDate:          "Fecha de fallecimiento",
+  nationalities:      "Nacionalidades",
+  nationalityPlaceholder: "Ej: Argentina — Enter para agregar",
+  partner:            "Pareja",
+  partnerActive:      "¿Pareja activa?",
+  partnerNone:        "— sin pareja —",
+  parents:            "Padres",
+  children:           "Hijos",
+  multiSelectHint:    "Ctrl+click para seleccionar múltiples",
+  history:            "Biografía / Anécdotas",
+  historyPlaceholder: "Escribí una biografía, anécdotas, recuerdos...",
+  customFieldLabel:   "Nombre del campo (ej: Profesión)",
+  customFieldValue:   "Valor",
+  addCustomField:     "+ Agregar campo",
+  removeCustomField:  "Eliminar campo",
+  generationDisplay:  "Generación asignada:",
+  cancel:             "Cancelar",
+  create:             "Crear persona",
+  save:               "Guardar cambios",
+  saving:             "Guardando…",
+  firstNamePlaceholder:      "Ej: Juan",
+  middleNamePlaceholder:     "Opcional",
+  lastNamePlaceholder:       "Ej: González",
+  motherLastNamePlaceholder: "Opcional",
+  birthPlacePlaceholder:     "Ej: Buenos Aires",
+  cityPlaceholder:           "Ej: Córdoba",
+
+} as const;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -57,73 +101,73 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
     <div className={styles.form}>
       <div className={styles.body}>
 
-        <SectionTitle>Datos básicos</SectionTitle>
+        <SectionTitle>{UI.sectionBasic}</SectionTitle>
 
-        <Field label="Nombre *">
+        <Field label={UI.firstName}>
           <input
             className={styles.input}
             value={formData.firstName}
             onChange={(e) => setField("firstName", e.target.value)}
-            placeholder="Ej: Juan"
+            placeholder={UI.firstNamePlaceholder}
           />
         </Field>
 
-        <Field label="Segundos nombres">
+        <Field label={UI.middleName}>
           <input
             className={styles.input}
             value={formData.middleName}
             onChange={(e) => setField("middleName", e.target.value)}
-            placeholder="Opcional"
+            placeholder={UI.middleNamePlaceholder}
           />
         </Field>
 
-        <Field label="Apellido *">
+        <Field label={UI.lastName}>
           <input
             className={styles.input}
             value={formData.lastName}
             onChange={(e) => setField("lastName", e.target.value)}
-            placeholder="Ej: González"
+            placeholder={UI.lastNamePlaceholder}
           />
         </Field>
 
-        <Field label="Apellido materno">
+        <Field label={UI.motherLastName}>
           <input
             className={styles.input}
             value={formData.motherLastName}
             onChange={(e) => setField("motherLastName", e.target.value)}
-            placeholder="Opcional"
+            placeholder={UI.motherLastNamePlaceholder}
           />
         </Field>
 
-        <Field label="¿Está vivo?">
+        <Field label={UI.isAlive}>
           <Toggle
             value={formData.isAlive}
             onChange={(v) => setField("isAlive", v)}
-            label={formData.isAlive ? "Sí" : "No"}
+            label={formData.isAlive ? UI.yes : UI.no}
           />
         </Field>
 
-        <SectionTitle>Origen y fechas</SectionTitle>
+        <SectionTitle>{UI.sectionOrigin}</SectionTitle>
 
-        <Field label="Lugar de nacimiento">
+        <Field label={UI.birthPlace}>
           <input
             className={styles.input}
             value={formData.birthPlace}
             onChange={(e) => setField("birthPlace", e.target.value)}
-            placeholder="Ej: Buenos Aires"
+            placeholder={UI.birthPlacePlaceholder}
           />
         </Field>
 
-        <Field label="Ciudad de residencia">
+        <Field label={UI.city}>
           <input
             className={styles.input}
             value={formData.city}
             onChange={(e) => setField("city", e.target.value)}
-            placeholder="Ej: Córdoba"
+            placeholder={UI.cityPlaceholder}
           />
         </Field>
 
-        <Field label="Fecha de nacimiento">
+        <Field label={UI.birthDate}>
           <input
             className={styles.input}
             type="date"
@@ -133,7 +177,8 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
         </Field>
 
         {!formData.isAlive && (
-          <Field label="Fecha de fallecimiento">
+          <Field label={UI.isAlive}>
+
             <input
               className={styles.input}
               type="date"
@@ -143,36 +188,36 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
           </Field>
         )}
 
-        <Field label="Nacionalidades">
+        <Field label={UI.nationalities}>
           <ChipInput
             values={formData.nationalities}
             onAdd={addNationality}
             onRemove={removeNationality}
-            placeholder="Ej: Argentina — Enter para agregar"
+            placeholder={UI.nationalityPlaceholder}
             inputClassName={styles.input}
           />
         </Field>
 
-        <SectionTitle>Generación *</SectionTitle>
+        <SectionTitle>{UI.sectionGeneration}</SectionTitle>
         <GenerationPicker
           onGenerationResolved={setGeneration}
           currentGeneration={formData.generation}
         />
         {formData.generation !== null && (
           <p className={styles.genDisplay}>
-            Generación asignada: <strong>{formData.generation}</strong>
+            {UI.generationDisplay} <strong>{formData.generation}</strong>
           </p>
         )}
 
-        <SectionTitle>Relaciones</SectionTitle>
+        <SectionTitle>{UI.sectionRelations}</SectionTitle>
 
-        <Field label="Pareja">
+        <Field label={UI.partner}>
           <select
             className={styles.input}
             value={formData.coupleId ?? ""}
             onChange={(e) => setField("coupleId", e.target.value || null)}
           >
-            <option value="">— sin pareja —</option>
+            <option value="">{UI.partnerNone}</option>
             {otherPersons.map((p) => (
               <option key={p.id} value={p.id}>{getFullName(p)}</option>
             ))}
@@ -180,16 +225,16 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
         </Field>
 
         {formData.coupleId && (
-          <Field label="¿Pareja activa?">
+          <Field label={UI.partnerActive}>
             <Toggle
               value={formData.coupleActive}
               onChange={(v) => setField("coupleActive", v)}
-              label={formData.coupleActive ? "Sí" : "No"}
+              label={formData.coupleActive ? UI.yes : UI.no}
             />
           </Field>
         )}
 
-        <Field label="Padres">
+        <Field label={UI.parents}>
           <select
             className={styles.input}
             multiple
@@ -204,10 +249,10 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
               <option key={p.id} value={p.id}>{getFullName(p)}</option>
             ))}
           </select>
-          <span className={styles.hint}>Ctrl+click para seleccionar múltiples</span>
+          <span className={styles.hint}>{UI.multiSelectHint}</span>
         </Field>
 
-        <Field label="Hijos">
+        <Field label={UI.children}>
           <select
             className={styles.input}
             multiple
@@ -222,20 +267,20 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
               <option key={p.id} value={p.id}>{getFullName(p)}</option>
             ))}
           </select>
-          <span className={styles.hint}>Ctrl+click para seleccionar múltiples</span>
+          <span className={styles.hint}>{UI.multiSelectHint}</span>
         </Field>
 
-        <Field label="Biografía / Anécdotas">
+        <Field label={UI.history}>
           <textarea
             className={`${styles.input} ${styles.inputTextarea}`}
             value={formData.history ?? ""}
             onChange={(e) => setField("history", e.target.value)}
-            placeholder="Escribí una biografía, anécdotas, recuerdos..."
+            placeholder={UI.historyPlaceholder}
             rows={5}
           />
         </Field>
 
-        <SectionTitle>Campos personalizados</SectionTitle>
+        <SectionTitle>{UI.sectionCustom}</SectionTitle>
 
         {formData.customFields.map((field, i) => (
           <div key={field.key} className={styles.customField}>
@@ -243,19 +288,19 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
               className={styles.input}
               value={field.label}
               onChange={(e) => updateCustomField(i, { label: e.target.value })}
-              placeholder="Nombre del campo (ej: Profesión)"
+              placeholder={UI.customFieldLabel}
             />
             <input
               className={styles.input}
               value={field.value}
               onChange={(e) => updateCustomField(i, { value: e.target.value })}
-              placeholder="Valor"
+              placeholder={UI.customFieldValue}
             />
             <button
               type="button"
               className={styles.btnRemove}
               onClick={() => removeCustomField(i)}
-              aria-label="Eliminar campo"
+              aria-label={UI.removeCustomField}
             >×</button>
           </div>
         ))}
@@ -265,7 +310,7 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
           className={`${styles.btn} ${styles.btnGhost} ${styles.btnAddField}`}
           onClick={addCustomField}
         >
-          + Agregar campo
+          {UI.addCustomField}
         </button>
 
         {error && <p className={styles.error}>{error}</p>}
@@ -279,7 +324,7 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
           onClick={() => { reset(); onCancel?.(); }}
           disabled={isSubmitting}
         >
-          Cancelar
+          {UI.cancel}
         </button>
         <button
           type="button"
@@ -287,11 +332,7 @@ export default function PersonForm({ mode, personId, onSuccess, onCancel }: Prop
           onClick={submit}
           disabled={isSubmitting}
         >
-          {isSubmitting
-            ? "Guardando…"
-            : mode === "create"
-            ? "Crear persona"
-            : "Guardar cambios"}
+          {isSubmitting ? UI.saving : mode === "create" ? UI.create : UI.save}
         </button>
       </div>
     </div>

@@ -1,0 +1,73 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.select {
+  width: 100%;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  appearance: none;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-gold-40);
+}
+
+.result {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-node);
+  border: 1px solid var(--color-border-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.resultLabel {
+  font-size: 10px;
+  color: var(--color-text-ghost);
+  letter-spacing: 0.04em;
+}
+
+.resultValue {
+  font-size: 13px;
+  color: var(--color-text-gold);
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+
+.resultHint {
+  font-size: 11px;
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+.error {
+  font-size: 11px;
+  color: var(--color-text-danger);
+  margin: 0;
+}

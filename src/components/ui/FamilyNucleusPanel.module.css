@@ -47,13 +47,14 @@
 
 .btnDanger {
   background: var(--color-bg-delete);
-  border: 1px solid #9a4a4a44;
+  border: 1px solid var(--color-border-danger);
   color: var(--color-text-danger);
 }
 
 .btnDanger:hover {
   background: #3a1010;
   border-color: var(--color-border-danger);
+  color: var(--color-danger-light);
 }
 
 /* ─── Sección de avatar ──────────────────────────────────────────────────────*/

@@ -1,17 +1,10 @@
 import FamilyTree from "@/components/tree/FamilyTree";
+import styles from "./page.module.css";
 
 export default function TreePage() {
   return (
-    <main className="tree-page">
+    <main className={styles.page}>
       <FamilyTree />
-      <style>{`
-        .tree-page {
-          width: 100%;
-          height: 100vh;
-          overflow: hidden;
-          background: #080808;
-        }
-      `}</style>
     </main>
   );
 }
