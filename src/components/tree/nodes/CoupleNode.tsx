@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Handle, Position, type NodeProps, useStore } from "@xyflow/react";
+import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CoupleNode as CoupleNodeType } from "@/types/graph";
 
 /*
@@ -16,13 +16,10 @@ import type { CoupleNode as CoupleNodeType } from "@/types/graph";
 
 type Props = NodeProps<CoupleNodeType>;
 
-function CoupleNode({ data, selected, id }: Props) {
+function CoupleNode({ data, selected }: Props) {
   const { active, isHighlighted = true } = data;
   const isDimmed = !isHighlighted;
 
-  // Leer el zoom actual del store de ReactFlow para escalar
-  // el conector interno entre los dos PersonNodes
-  const zoom = useStore((s) => s.transform[2]);
 
   return (
     <>

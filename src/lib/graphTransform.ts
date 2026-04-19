@@ -9,6 +9,13 @@ import type {
   CoupleEdgeData,
   LayoutResult,
 } from "@/types/graph";
+import {
+  NODE_WIDTH,
+  NODE_HEIGHT,
+  COUPLE_PADDING,
+  COUPLE_GAP,
+  COUPLE_HEIGHT,
+} from "@/lib/layoutConstants";
 
 /*
     Los puntos clave de este archivo:
@@ -107,10 +114,6 @@ export function transformToReactFlow(
     });
 
 // ── 2. PersonNodes dentro del compound ─────────────────────────────────
-  const NODE_WIDTH_LOCAL = 180;
-  const PADDING = 12;
-  const GAP = 16;
-
   orderedPersonIds.forEach((personId, slotIndex) => {
     const person = persons.find((p) => p.id === personId);
     if (!person) return;
@@ -134,8 +137,8 @@ export function transformToReactFlow(
       id: personId,
       type: "person",
       position: {
-        x: PADDING + slotIndex * (NODE_WIDTH_LOCAL + GAP),
-        y: PADDING,
+        x: COUPLE_PADDING + slotIndex * (NODE_WIDTH + COUPLE_GAP),
+        y: COUPLE_PADDING,
       },
       data: personNodeData,
       width: personPos.width,
@@ -149,8 +152,7 @@ export function transformToReactFlow(
 // ── 3. PersonNodes sueltos (sin pareja) ────────────────────────────────────
 
   const personsInCouple = new Set(couples.flatMap((c) => c.persons));
-  const COUPLE_HEIGHT   = 80 + 12 * 2; // 104 — igual que elkLayout
-
+  
   // IDs de nodos huérfanos — su Y ya fue centrada manualmente en elkLayout
   // Los nodos conectados vienen de ELK sin centrar y necesitan el offset
   const nodesWithEdges = new Set<string>();
