@@ -112,7 +112,7 @@ export default function FamilyTree() {
           aria-label="Deshacer última acción"
           title="Deshacer"
         >
-          ↩
+          ⎌
         </button>
 
         <button
