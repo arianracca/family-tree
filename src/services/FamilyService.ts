@@ -1,28 +1,11 @@
 import { activeRepository } from "@/lib/familyRepository";
 import type { Person, Relation, CoupleRelation, ParentChildRelation } from "@/types/family";
 import type { PersonFormData } from "@/hooks/usePersonForm";
+import { ValidationError, IntegrityError } from "@/services/FamilyErrors";
 
-// ─── Errores tipados ──────────────────────────────────────────────────────────
-// Permite que los consumidores distingan errores de validación de errores
-// de red sin hacer parsing de strings.
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ValidationError";
-  }
-}
-
-export class IntegrityError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "IntegrityError";
-  }
-}
+export { ValidationError, IntegrityError };
 
 // ─── Validación ───────────────────────────────────────────────────────────────
-// Separada del servicio para que sea testeable de forma aislada.
-// Retorna el primer error encontrado o null si los datos son válidos.
 
 export function validatePersonForm(data: PersonFormData): string | null {
   if (!data.firstName.trim()) return "El Nombre es obligatorio.";
@@ -33,11 +16,13 @@ export function validatePersonForm(data: PersonFormData): string | null {
 }
 
 // ─── Builder de payload ───────────────────────────────────────────────────────
-// Transforma PersonFormData (estado del formulario) en el shape que
-// espera el repositorio. Centraliza el trimming y la normalización de nulos.
 
-function buildPersonPayload(data: PersonFormData): Omit<Person, "id"> {
+function buildPersonPayload(
+  data: PersonFormData,
+  id?: string
+): Omit<Person, "id"> & { id?: string } {
   return {
+    ...(id ? { id } : {}),
     firstName:      data.firstName.trim(),
     middleName:     data.middleName.trim()      || null,
     lastName:       data.lastName.trim(),
@@ -58,16 +43,12 @@ function buildPersonPayload(data: PersonFormData): Omit<Person, "id"> {
 }
 
 // ─── Sincronización de relaciones ─────────────────────────────────────────────
-// Elimina todas las relaciones existentes de una persona y las recrea
-// desde el estado actual del formulario. Estrategia replace-all para
-// mantener la consistencia sin lógica de diff.
 
 async function syncRelations(
   personId: string,
   formData: PersonFormData,
   currentRelations: Relation[]
 ): Promise<void> {
-  // 1. Eliminar relaciones existentes de esta persona
   const toRemove = currentRelations.filter((r) => {
     if (r.type === "parent-child")
       return r.from === personId || r.to === personId;
@@ -79,8 +60,6 @@ async function syncRelations(
   for (const rel of toRemove) {
     await activeRepository.removeRelation(rel);
   }
-
-  // 2. Crear relaciones nuevas desde el formulario
 
   if (formData.coupleId) {
     await activeRepository.addRelation({
@@ -108,28 +87,22 @@ async function syncRelations(
 }
 
 // ─── Validación de integridad referencial ─────────────────────────────────────
-// Verifica que las relaciones del formulario no creen inconsistencias
-// en el grafo familiar. Se ejecuta antes de cualquier escritura.
 
 function validateIntegrity(
   personId: string | undefined,
   formData: PersonFormData,
   allPersonIds: string[]
 ): void {
-  // Una persona no puede ser su propia pareja ni su propio padre/hijo
   if (formData.coupleId === personId) {
     throw new IntegrityError("Una persona no puede ser pareja de sí misma.");
   }
-
   if (formData.parentIds.includes(personId ?? "")) {
     throw new IntegrityError("Una persona no puede ser su propio padre.");
   }
-
   if (formData.childrenIds.includes(personId ?? "")) {
     throw new IntegrityError("Una persona no puede ser su propio hijo.");
   }
 
-  // Los IDs referenciados deben existir en el dataset
   const invalidIds = [
     ...(formData.coupleId ? [formData.coupleId] : []),
     ...formData.parentIds,
@@ -144,28 +117,27 @@ function validateIntegrity(
 }
 
 // ─── FamilyService ────────────────────────────────────────────────────────────
-// Punto de entrada público. Los hooks y componentes solo interactúan
-// con este objeto — nunca con activeRepository directamente.
 
 export const FamilyService = {
 
   /**
    * Crea una persona nueva con sus relaciones.
-   * Retorna la persona creada con el ID asignado por el servidor.
-   * Lanza ValidationError si los datos del formulario son inválidos.
-   * Lanza IntegrityError si las relaciones crearían inconsistencias.
+   * @param id — ID opcional. Si se pasa, el repositorio/backend lo usa tal cual
+   *             en lugar de generar uno nuevo. Necesario para restaurar personas
+   *             eliminadas (DeletePersonCommand.undo) con el mismo ID original.
    */
   async createPerson(
     formData: PersonFormData,
     currentRelations: Relation[],
-    allPersonIds: string[]
+    allPersonIds: string[],
+    id?: string
   ): Promise<Person> {
     const validationError = validatePersonForm(formData);
     if (validationError) throw new ValidationError(validationError);
 
     validateIntegrity(undefined, formData, allPersonIds);
 
-    const payload = buildPersonPayload(formData);
+    const payload = buildPersonPayload(formData, id);
     const created = await activeRepository.createPerson(payload);
 
     await syncRelations(created.id, formData, currentRelations);
@@ -175,8 +147,6 @@ export const FamilyService = {
 
   /**
    * Actualiza una persona existente y sincroniza sus relaciones.
-   * Lanza ValidationError si los datos del formulario son inválidos.
-   * Lanza IntegrityError si las relaciones crearían inconsistencias.
    */
   async updatePerson(
     personId: string,
@@ -199,7 +169,6 @@ export const FamilyService = {
 
   /**
    * Elimina una persona y todas sus relaciones.
-   * El repositorio maneja la limpieza de relaciones en cascada.
    */
   async deletePerson(personId: string): Promise<void> {
     await activeRepository.deletePerson(personId);

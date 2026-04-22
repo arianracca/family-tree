@@ -187,7 +187,8 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
 // ── Store ──────────────────────────────────────────────────────────────────
   const persons = useFamilyStore((s) => s.familyData.persons);
   const clearSelection = useFamilyStore((s) => s.clearSelection);
-  const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
+  const loadFamilyData  = useFamilyStore((s) => s.loadFamilyData);
+  const executeCommand  = useFamilyStore((s) => s.executeCommand);
   const clearHighlight = useTreeStore((s) => s.clearHighlight);
 
   // ── Derivaciones ───────────────────────────────────────────────────────────
@@ -209,8 +210,9 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
   }, [clearSelection, clearHighlight]);
 
   async function handleDelete() {
-    await FamilyService.deletePerson(personId);
-    await loadFamilyData();
+    const displayName = name;
+    const { DeletePersonCommand } = await import("@/commands/DeletePersonCommand");
+    await executeCommand(new DeletePersonCommand(personId, displayName));
     handleClose();
   }
 

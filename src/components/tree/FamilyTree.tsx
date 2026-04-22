@@ -17,6 +17,7 @@ const UI = {
   addPerson:      "Agregar persona",
   addPersonTitle: "Agregar persona al árbol",
   addBtn:         "+",
+  undoBtn:        "Deshacer",
 } as const;
 
 // ─── NucleusController ────────────────────────────────────────────────────────
@@ -50,6 +51,8 @@ export default function FamilyTree() {
   const loadFamilyData   = useFamilyStore((s) => s.loadFamilyData);
   const error            = useFamilyStore((s) => s.error);
   const selectedPersonId = useFamilyStore((s) => s.selectedPersonId);
+  const canUndo          = useFamilyStore((s) => s.canUndo);  // ← aquí
+  const undo             = useFamilyStore((s) => s.undo);     // ← aquí
 
   const [showCreatePanel, setShowCreatePanel] = useState(false);
 
@@ -60,6 +63,17 @@ export default function FamilyTree() {
   useEffect(() => {
     if (selectedPersonId) setShowCreatePanel(false);
   }, [selectedPersonId]);
+
+  useEffect(() => {                                           // ← aquí
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        if (canUndo) undo();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [canUndo, undo]);
 
   if (error) {
     return (
@@ -89,6 +103,17 @@ export default function FamilyTree() {
         ) : (
           <NucleusController />
         )}
+
+        <button
+          className={styles.undoBtn}
+          onClick={undo}
+          disabled={!canUndo}
+          type="button"
+          aria-label="Deshacer última acción"
+          title="Deshacer"
+        >
+          ↩
+        </button>
 
         <button
           className={styles.addBtn}

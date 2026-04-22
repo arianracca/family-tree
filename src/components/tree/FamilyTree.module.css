@@ -62,3 +62,46 @@
 .addBtn:active {
   transform: scale(0.96);
 }
+
+/* ─── Botón deshacer ─────────────────────────────────────────────────────────*/
+
+.undoBtn {
+  position: absolute;
+  bottom: 28px;
+  left: 84px; /* 28px margen + 44px addBtn + 12px gap */
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-mid);
+  color: var(--color-text-gold);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition:
+    border-color var(--transition-fast),
+    background   var(--transition-fast),
+    transform    var(--transition-fast),
+    opacity      var(--transition-fast);
+  box-shadow: var(--shadow-add-btn);
+  font-family: var(--font-serif);
+}
+
+.undoBtn:hover:not(:disabled) {
+  border-color: var(--color-gold-40);
+  background: #161616;
+  transform: scale(1.08);
+}
+
+.undoBtn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.undoBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
-import { FamilyService, ValidationError, IntegrityError } from "@/services/FamilyService";
+import { ValidationError, IntegrityError } from "@/services/FamilyErrors";
 import type { Person, Relation, CustomField, CoupleRelation, ParentChildRelation } from "@/types/family";
 
 // ─── UI strings ───────────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ export function usePersonForm({
     })), []
   );
 
-  // ── Submit — delega completamente al servicio ────────────────────────────
+// ── Submit — ejecuta vía Command Pattern para habilitar undo ────────────
 
   const submit = useCallback(async () => {
     setIsSubmitting(true);
@@ -201,19 +201,24 @@ export function usePersonForm({
     try {
       const { relations, persons } = useFamilyStore.getState().familyData;
       const allPersonIds = persons.map((p) => p.id);
+      const executeCommand = useFamilyStore.getState().executeCommand;
 
       if (mode === "create") {
-        await FamilyService.createPerson(formData, relations, allPersonIds);
+        const { CreatePersonCommand } = await import("@/commands/CreatePersonCommand");
+        await executeCommand(
+          new CreatePersonCommand(formData, relations, allPersonIds)
+        );
       } else {
-        await FamilyService.updatePerson(
-          personId!,
-          formData,
-          relations,
-          allPersonIds
+        const person = persons.find((p) => p.id === personId);
+        const displayName = person
+          ? `${person.firstName} ${person.lastName}`
+          : personId!;
+        const { UpdatePersonCommand } = await import("@/commands/UpdatePersonCommand");
+        await executeCommand(
+          new UpdatePersonCommand(personId!, formData, relations, allPersonIds, displayName)
         );
       }
 
-      await loadFamilyData();
       onSuccess?.();
 
     } catch (err) {
@@ -225,7 +230,7 @@ export function usePersonForm({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, mode, personId, loadFamilyData, onSuccess]);
+  }, [formData, mode, personId, onSuccess]);
 
   // ── Reset ────────────────────────────────────────────────────────────────
 

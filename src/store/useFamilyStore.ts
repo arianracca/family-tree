@@ -2,10 +2,14 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyData, Person, Relation } from "@/types/family";
+import type { FamilyCommand } from "@/commands/FamilyCommand";
 
 const UI = {
   errorData: "Error al cargar los datos.",
 } as const;
+
+// ─── Tamaño máximo de la pila de undo ────────────────────────────────────────
+const MAX_UNDO_STACK = 50;
 
 interface FamilyState {
   familyData: FamilyData;
@@ -13,6 +17,10 @@ interface FamilyState {
   error: string | null;
   selectedPersonId: string | null;
   selectedCoupleId: string | null;
+
+  // ── Command Pattern ─────────────────────────────────────────────────────────
+  undoStack: FamilyCommand[];
+  canUndo: boolean;
 
   // ── Carga de datos ──────────────────────────────────────────────────────────
   loadFamilyData: () => Promise<void>;
@@ -28,18 +36,26 @@ interface FamilyState {
   selectPerson: (personId: string | null) => void;
   selectCouple: (coupleId: string | null) => void;
   clearSelection: () => void;
+
+  // ── Command Pattern — acciones ──────────────────────────────────────────────
+  executeCommand: (command: FamilyCommand) => Promise<void>;
+  undo: () => Promise<void>;
 }
 
 const EMPTY_FAMILY_DATA: FamilyData = { persons: [], relations: [] };
 
 export const useFamilyStore = create<FamilyState>()(
-  immer((set) => ({
+  immer((set, get) => ({
     // ── Estado inicial vacío — se puebla via loadFamilyData ──────────────────
     familyData: EMPTY_FAMILY_DATA,
     isLoading: false,
     error: null,
     selectedPersonId: null,
     selectedCoupleId: null,
+
+    // ── Command Pattern — estado inicial ──────────────────────────────────────
+    undoStack: [],
+    canUndo: false,
 
     // ── Carga desde el provider ───────────────────────────────────────────────
     loadFamilyData: async () => {
@@ -55,7 +71,86 @@ export const useFamilyStore = create<FamilyState>()(
       }
     },
 
-    // ── Acciones de datos (sin cambios) ───────────────────────────────────────
+    // ── executeCommand ────────────────────────────────────────────────────────
+    // 1. Ejecuta el comando (llama FamilyService → repositorio → API)
+    // 2. Actualiza familyData optimistamente sin recargar todo
+    // 3. Sincroniza con el servidor para garantizar consistencia
+    // 4. Empuja el comando a la pila de undo (máximo MAX_UNDO_STACK)
+    //
+    // Si execute() falla, el error se propaga al hook — nunca se pushea
+    // a la pila un comando que no se ejecutó correctamente.
+
+    executeCommand: async (command: FamilyCommand) => {
+      const result = await command.execute();
+
+      // ── Actualización optimista del store ──────────────────────────────────
+      set((state) => {
+        if (result.operation === "create") {
+          state.familyData.persons.push(result.person);
+        }
+
+        if (result.operation === "update") {
+          const idx = state.familyData.persons.findIndex(
+            (p) => p.id === result.person.id
+          );
+          if (idx !== -1) state.familyData.persons[idx] = result.person;
+        }
+
+        if (result.operation === "delete") {
+          state.familyData.persons = state.familyData.persons.filter(
+            (p) => p.id !== result.personId
+          );
+          state.familyData.relations = state.familyData.relations.filter((r) => {
+            if (r.type === "parent-child")
+              return r.from !== result.personId && r.to !== result.personId;
+            if (r.type === "couple")
+              return !r.persons.includes(result.personId);
+            return true;
+          });
+        }
+
+        // Pila: mantiene los últimos MAX_UNDO_STACK comandos
+        const newStack = [...state.undoStack, command].slice(-MAX_UNDO_STACK);
+        state.undoStack = newStack;
+        state.canUndo = true;
+      });
+
+      // ── Sincronización con el servidor ────────────────────────────────────
+      // Garantiza que el store refleja el estado real del backend,
+      // incluyendo IDs generados por el servidor y relaciones en cascada.
+      await get().loadFamilyData();
+    },
+
+    // ── undo ──────────────────────────────────────────────────────────────────
+    // Extrae el último comando y lo revierte.
+    // Recarga desde el servidor para garantizar consistencia total.
+    // Si undo() falla, limpia la pila entera para evitar estados corruptos.
+
+    undo: async () => {
+      const { undoStack } = get();
+      if (undoStack.length === 0) return;
+
+      const command = undoStack[undoStack.length - 1];
+
+      try {
+        await command.undo();
+        await get().loadFamilyData();
+
+        set((state) => {
+          state.undoStack = state.undoStack.slice(0, -1);
+          state.canUndo = state.undoStack.length > 0;
+        });
+      } catch (err) {
+        // Pila limpia para evitar estados inconsistentes
+        set((state) => {
+          state.undoStack = [];
+          state.canUndo = false;
+        });
+        throw err;
+      }
+    },
+
+    // ── Acciones de datos directas (usadas internamente o por tests) ──────────
     addPerson: (person) =>
       set((state) => { state.familyData.persons.push(person); }),
 
@@ -96,7 +191,7 @@ export const useFamilyStore = create<FamilyState>()(
         });
       }),
 
-    // ── Selección (sin cambios) ───────────────────────────────────────────────
+    // ── Selección ─────────────────────────────────────────────────────────────
     selectPerson: (personId) =>
       set((state) => {
         state.selectedPersonId = personId;
@@ -117,7 +212,7 @@ export const useFamilyStore = create<FamilyState>()(
   }))
 );
 
-// ── Selectores (sin cambios) ──────────────────────────────────────────────────
+// ── Selectores ────────────────────────────────────────────────────────────────
 
 export function selectPersonById(id: string) {
   return (state: FamilyState): Person | undefined =>
