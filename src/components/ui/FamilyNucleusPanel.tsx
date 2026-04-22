@@ -5,13 +5,13 @@ import { useTreeStore } from "@/store/useTreeStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import AvatarUpload from "@/components/ui/AvatarUpload";
 import PersonForm from "@/components/ui/PersonForm";
-import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyNucleus, Person } from "@/types/family";
 import panelStyles from "@/components/ui/panel.module.css";
 import styles from "@/components/ui/FamilyNucleusPanel.module.css";
 import FieldRow from "@/components/ui/primitives/FieldRow";
 import IconButton from "@/components/ui/primitives/IconButton";
 import PanelHeader from "@/components/ui/primitives/PanelHeader";
+import { FamilyService } from "@/services/FamilyService";
 
 const UI = {
   labelNucleus:  "Núcleo familiar",
@@ -209,10 +209,10 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
   }, [clearSelection, clearHighlight]);
 
   async function handleDelete() {
-      await activeRepository.deletePerson(personId);
-      await loadFamilyData();
-      handleClose();
-    }
+    await FamilyService.deletePerson(personId);
+    await loadFamilyData();
+    handleClose();
+  }
 
 // ── Render: modo create ───────────────────────────────────────────────────
   if (mode === "create") {
