@@ -3,6 +3,13 @@ import { useFamilyStore } from "@/store/useFamilyStore";
 import { activeRepository } from "@/lib/familyRepository";
 import type { Person, Relation, CustomField, CoupleRelation, ParentChildRelation } from "@/types/family";
 
+const UI = {
+  errorFirstName:  "El Nombre es obligatorio.",
+  errorLastName:   "El Apellido es obligatorio.",
+  errorGeneration: "Definí la generación usando el selector de relación.",
+  errorSave:       "Error al guardar.",
+} as const;
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface PersonFormData {
@@ -95,9 +102,9 @@ export function personToFormData(person: Person, relations: Relation[]): PersonF
 }
 
 function validate(data: PersonFormData): string | null {
-  if (!data.firstName.trim()) return "El Nombre es obligatorio.";
-  if (!data.lastName.trim())  return "El Apellido es obligatorio.";
-  if (data.generation === null) return "Definí la generación usando el selector de relación.";
+  if (!data.firstName.trim()) return UI.errorFirstName;
+  if (!data.lastName.trim())  return UI.errorLastName;
+  if (data.generation === null) return UI.errorGeneration;
   return null;
 }
 
@@ -225,7 +232,7 @@ export function usePersonForm({ mode, personId, onSuccess }: UsePersonFormOption
       onSuccess?.();
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar.");
+      setError(err instanceof Error ? err.message : UI.errorSave);
     } finally {
       setIsSubmitting(false);
     }

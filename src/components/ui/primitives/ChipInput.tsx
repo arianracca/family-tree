@@ -3,6 +3,10 @@
 import { useState } from "react";
 import styles from "./ChipInput.module.css";
 
+const UI = {
+  hint:            "Enter para agregar",
+} as const;
+
 interface Props {
   values:      string[];
   onAdd:       (value: string) => void;
@@ -15,7 +19,7 @@ export default function ChipInput({
   values,
   onAdd,
   onRemove,
-  placeholder = "Enter para agregar",
+  placeholder = UI.hint,
   inputClassName,
 }: Props) {
   const [input, setInput] = useState("");

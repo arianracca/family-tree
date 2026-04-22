@@ -10,6 +10,14 @@ import {
 } from "@/lib/generationUtils";
 import styles from "./GenerationPicker.module.css";
 
+const UI = {
+  label:            "Generación",
+  choosePersonHint: "— elegir persona —",
+  calculatedLabel:  "Generación calculada:",
+  referenceHint:    "Seleccioná una persona de referencia",
+  calcError:        "No se pudo calcular la generación.",
+} as const;
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -32,7 +40,7 @@ export default function GenerationPicker({
   const persons = useFamilyStore((s) => s.familyData.persons);
 
   const [referenceId,  setReferenceId]  = useState<string>("");
-  const [relationship, setRelationship] = useState<RelationshipType>("same generation as");
+  const [relationship, setRelationship] = useState<RelationshipType>("same_generation");
   const [resolved,     setResolved]     = useState<number | null>(currentGeneration ?? null);
   const [error,        setError]        = useState<string | null>(null);
 
@@ -48,7 +56,7 @@ export default function GenerationPicker({
     const result = resolveGeneration(refId, rel, persons);
 
     if (result === null) {
-      setError("No se pudo calcular la generación.");
+      setError(UI.calcError);
       setResolved(null);
       return;
     }
@@ -74,7 +82,7 @@ export default function GenerationPicker({
 
   return (
     <div className={styles.picker}>
-      <label className={styles.label}>Generación</label>
+      <label className={styles.label}>{UI.label}</label>
 
       <div className={styles.row}>
         <select
@@ -94,7 +102,7 @@ export default function GenerationPicker({
           value={referenceId}
           onChange={handleReferenceChange}
         >
-          <option value="">— elegir persona —</option>
+          <option value="">{UI.choosePersonHint}</option>
           {persons.map((p) => (
             <option key={p.id} value={p.id}>
               {getFullName(p)}
@@ -109,12 +117,12 @@ export default function GenerationPicker({
       >
         {resolved !== null ? (
           <>
-            <span className={styles.resultLabel}>Generación calculada:</span>
+            <span className={styles.resultLabel}>{UI.calculatedLabel}</span>
             <span className={styles.resultValue}>{resolved}</span>
           </>
         ) : (
           <span className={styles.resultHint}>
-            Seleccioná una persona de referencia
+            {UI.referenceHint}
           </span>
         )}
       </div>

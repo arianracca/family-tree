@@ -158,8 +158,8 @@ export async function computeElkLayout(
       const couple = couples.find((c) => getCoupleId(c.persons) === node.id);
 
       if (couple) {
-        const PADDING = 12;
-        const GAP     = 16;
+        const PADDING = COUPLE_PADDING;
+        const GAP     = COUPLE_GAP;
 
         nodeMeta.set(node.id, {
           id: node.id,
@@ -202,16 +202,6 @@ export async function computeElkLayout(
   }
 
   extractPositions(layouted.children ?? []);
-  
-  // LOG TEMPORAL — borrar después
-  console.table(
-    [...positions.entries()].map(([id, pos]) => ({
-      id,
-      ...pos,
-      gen: nodeMeta.get(id)?.generation,
-      type: nodeMeta.get(id)?.nodeType,
-    }))
-  );
 
 // ── 8. Posicionar nodos huérfanos manualmente ─────────────────────────────
   //
@@ -297,8 +287,8 @@ for (const orphan of [...orphanCouples, ...orphanSolos]) {
   orphanCursorX -= ORPHAN_MARGIN;
 
   if (couple) {
-    const PADDING = 12;
-    const GAP     = 16;
+    const PADDING = COUPLE_PADDING;
+    const GAP     = COUPLE_GAP;
 
     nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "couple", generation: gen });
 

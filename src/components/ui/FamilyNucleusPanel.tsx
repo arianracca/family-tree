@@ -35,6 +35,7 @@ const UI = {
   sectionPartner:      "Pareja",
   sectionParents:      "Padres",
   sectionParentsOf:    (name: string) => `Padres de ${name}`,
+  partnerFallback:     "pareja",   // ← fallback cuando no se resuelve el nombre
   sectionChildren:     "Hijos",
   emptyRelations:      "Sin relaciones registradas.",
   fieldBirthPlace:     "Lugar nacimiento",
@@ -344,7 +345,7 @@ return (
       )}
 
       {inlawParentIds.length > 0 && (
-        <Section title={UI.sectionParentsOf(partnerPerson?.firstName ?? "pareja")}>
+        <Section title={UI.sectionParentsOf(partnerPerson?.firstName ?? UI.partnerFallback)}>
           {inlawParentIds.map((id) => <PersonRow key={id} personId={id} role="inlaw" />)}
         </Section>
       )}

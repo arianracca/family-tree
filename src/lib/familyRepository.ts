@@ -1,5 +1,14 @@
 import type { FamilyData, Person, Relation } from "@/types/family";
 
+const UI = {
+  errorData:       "Error al cargar los datos.",
+  errorCreate:     "Error al crear la persona.",
+  errorUpdate:     "Error al actualizar la persona.",
+  errorDelete:     "Error al eliminar la persona.",
+  errorAddRel:     "Error al agregar la relación.",
+  errorRemoveRel:  "Error al eliminar la relación.",
+} as const;
+
 // ─── Contrato ─────────────────────────────────────────────────────────────────
 // Cuando llegue el backend REST, creás restRepository implementando
 // esta misma interfaz y lo enchufás en activeRepository. Nada más cambia.
@@ -18,7 +27,7 @@ export interface FamilyRepository {
 const apiRepository: FamilyRepository = {
   getAll: async () => {
     const res = await fetch("/api/family", { cache: "no-store" });
-    if (!res.ok) throw new Error("Error al cargar los datos");
+    if (!res.ok) throw new Error(UI.errorData);
     return res.json();
   },
 
@@ -28,7 +37,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Error al crear la persona");
+    if (!res.ok) throw new Error(UI.errorCreate);
     return res.json();
   },
 
@@ -38,7 +47,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id, ...updates }),
     });
-    if (!res.ok) throw new Error("Error al actualizar la persona");
+    if (!res.ok) throw new Error(UI.errorUpdate);
     return res.json();
   },
 
@@ -48,7 +57,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id }),
     });
-    if (!res.ok) throw new Error("Error al eliminar la persona");
+    if (!res.ok) throw new Error(UI.errorDelete);
   },
 
   addRelation: async (relation) => {
@@ -57,7 +66,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error("Error al agregar la relación");
+    if (!res.ok) throw new Error(UI.errorAddRel);
   },
 
   removeRelation: async (relation) => {
@@ -66,7 +75,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error("Error al eliminar la relación");
+    if (!res.ok) throw new Error(UI.errorRemoveRel);
   },
 };
 

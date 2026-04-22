@@ -3,6 +3,10 @@ import { immer } from "zustand/middleware/immer";
 import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyData, Person, Relation } from "@/types/family";
 
+const UI = {
+  errorData: "Error al cargar los datos.",
+} as const;
+
 interface FamilyState {
   familyData: FamilyData;
   isLoading: boolean;
@@ -45,7 +49,7 @@ export const useFamilyStore = create<FamilyState>()(
         set((state) => { state.familyData = data; state.isLoading = false; });
       } catch (err) {
         set((state) => {
-          state.error = err instanceof Error ? err.message : "Error cargando datos";
+          state.error = err instanceof Error ? err.message : UI.errorData;
           state.isLoading = false;
         });
       }

@@ -13,6 +13,12 @@ const FamilyNucleusPanel = lazy(
   () => import("@/components/ui/FamilyNucleusPanel")
 );
 
+const UI = {
+  addPerson:      "Agregar persona",
+  addPersonTitle: "Agregar persona al árbol",
+  addBtn:         "+",
+} as const;
+
 // ─── NucleusController ────────────────────────────────────────────────────────
 
 function NucleusController() {
@@ -88,9 +94,11 @@ export default function FamilyTree() {
           className={styles.addBtn}
           onClick={() => setShowCreatePanel(true)}
           type="button"
-          aria-label="Agregar persona"
-          title="Agregar persona al árbol"
-        >+</button>
+          aria-label={UI.addPersonTitle}
+          title={UI.addPerson}
+        >
+          {UI.addBtn}
+        </button>
 
       </div>
     </ReactFlowProvider>

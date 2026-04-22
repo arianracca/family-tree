@@ -23,6 +23,11 @@ import CoupleEdge from "./edges/CoupleEdge";
 import type { EdgeTypes } from "@xyflow/react";
 import styles from "./TreeCanvas.module.css";
 
+const UI = {
+  loadingLabel:  "Calculando árbol genealógico…",
+  errorLayout:   "Error al calcular el layout del árbol.",
+} as const;
+
 const edgeTypes: EdgeTypes = {
   parentChild: ParentChildEdge,
   couple:      CoupleEdge,
@@ -84,7 +89,7 @@ function TreeCanvasInner() {
       <div className={styles.errorState}>
         <span className={styles.errorIcon}>⚠</span>
         <p className={styles.errorMessage}>
-          Error al calcular el layout del árbol.
+          {UI.errorLayout}
         </p>
       </div>
     );
@@ -93,10 +98,10 @@ function TreeCanvasInner() {
   return (
     <div className={styles.canvas}>
       {layoutStatus === "loading" && (
-        <div className={styles.loading} aria-label="Calculando árbol...">
+        <div className={styles.loading} aria-label={UI.loadingLabel}>
           <div className={styles.spinner} />
           <span className={styles.loadingLabel}>
-            Calculando árbol genealógico…
+            {UI.loadingLabel}
           </span>
         </div>
       )}
@@ -125,7 +130,7 @@ function TreeCanvasInner() {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="var(--color-surface-2)"
+          color="var(--color-border-default)"
         />
       </ReactFlow>
     </div>

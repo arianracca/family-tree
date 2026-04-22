@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore } from "@/store/useTreeStore";
 import styles from "./AvatarUpload.module.css";
+import { error } from "console";
 
 interface Props {
   personId:        string;
@@ -17,6 +18,7 @@ type UploadStatus = "idle" | "uploading" | "success" | "error";
 // ─── Labels de UI — preparados para i18n ─────────────────────────────────────
 
 const UI = {
+  avatar:    "Avatar",
   idle:      "Cambiar foto",
   uploading: "Subiendo…",
   success:   "✓ Guardado",
@@ -24,6 +26,10 @@ const UI = {
   ariaChange:  "Cambiar foto de perfil",
   ariaRemove:  "Eliminar foto de perfil",
   titleRemove: "Eliminar foto",
+  unknownError: "Error desconocido",
+  uploadError:  "Error al subir la foto",
+  deleteError:  "Error al eliminar la foto",
+  error:        "Error",
 } as const;
 
 export default function AvatarUpload({
@@ -66,14 +72,14 @@ export default function AvatarUpload({
     try {
       const res  = await fetch("/api/upload-avatar", { method: "POST", body: formData });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error desconocido");
+      if (!res.ok) throw new Error(json.error ?? UI.unknownError);
 
       updatePerson(personId, { photoUrl: json.photoUrl });
       setStatus("success");
       setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Error al subir");
+      setErrorMsg(err instanceof Error ? err.message : UI.uploadError);
       setPreview(currentPhotoUrl ?? null);
     }
   }
@@ -88,7 +94,7 @@ export default function AvatarUpload({
         body:    JSON.stringify({ personId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Error desconocido");
+      if (!res.ok) throw new Error(json.error ?? UI.unknownError);
 
       updatePerson(personId, { photoUrl: null });
       setPreview(null);
@@ -96,7 +102,7 @@ export default function AvatarUpload({
       setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Error al eliminar");
+      setErrorMsg(err instanceof Error ? err.message : UI.deleteError);
     }
   }
 
@@ -123,7 +129,7 @@ export default function AvatarUpload({
       >
         <div className={styles.avatar}>
           {preview ? (
-            <img src={preview} alt="Avatar" className={styles.img} />
+            <img src={preview} alt={UI.avatar} className={styles.img} />
           ) : (
             <span className={styles.placeholder}>
               {(firstName ?? "?").charAt(0).toUpperCase()}
@@ -153,7 +159,7 @@ export default function AvatarUpload({
         {status === "idle"      && UI.idle}
         {status === "uploading" && UI.uploading}
         {status === "success"   && UI.success}
-        {status === "error"     && (errorMsg ?? "Error")}
+        {status === "error"     && (errorMsg ?? UI.error)}
       </div>
     </div>
   );

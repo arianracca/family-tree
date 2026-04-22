@@ -1,48 +1,48 @@
 import type { Person } from "@/types/family";
 
-// ─── Exported types needed by GenerationPicker ──────────────────────────
+// ─── Tipo con claves lógicas — sin espacios, aptas para next-intl ────────────
 
 export type RelationshipType =
-  | "child of"
-  | "parent of"
-  | "partner of"
-  | "same generation as"
-  | "nephew/niece of"
-  | "uncle/aunt of"
-  | "cousin of";
+  | "child_of"
+  | "parent_of"
+  | "partner_of"
+  | "same_generation"
+  | "nephew_of"
+  | "uncle_of"
+  | "cousin_of";
 
 export const RELATIONSHIP_OPTIONS: RelationshipType[] = [
-  "child of",
-  "parent of",
-  "partner of",
-  "same generation as",
-  "nephew/niece of",
-  "uncle/aunt of",
-  "cousin of",
+  "child_of",
+  "parent_of",
+  "partner_of",
+  "same_generation",
+  "nephew_of",
+  "uncle_of",
+  "cousin_of",
 ];
 
-// ─── Labels por idioma (preparado para i18n) ──────────────────────────────
+// ─── Labels de UI — en español por ahora, reemplazables por t() de next-intl
 
 export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
-  "child of":           "Hijo/a de",
-  "parent of":          "Padre/Madre de",
-  "partner of":         "Pareja de",
-  "same generation as": "Misma generación que",
-  "nephew/niece of":    "Sobrino/a de",
-  "uncle/aunt of":      "Tío/a de",
-  "cousin of":          "Primo/a de",
+  child_of:       "Hijo/a de",
+  parent_of:      "Padre/Madre de",
+  partner_of:     "Pareja de",
+  same_generation: "Misma generación que",
+  nephew_of:      "Sobrino/a de",
+  uncle_of:       "Tío/a de",
+  cousin_of:      "Primo/a de",
 };
 
-// ─── Generation delta by relationship type ────────────────────────────────
+// ─── Delta de generación por tipo de relación ─────────────────────────────────
 
 const GENERATION_DELTA: Record<RelationshipType, number> = {
-  "child of":           +1,
-  "parent of":          -1,
-  "partner of":          0,
-  "same generation as":  0,
-  "nephew/niece of":    +1,
-  "uncle/aunt of":      -1,
-  "cousin of":           0,
+  child_of:        +1,
+  parent_of:       -1,
+  partner_of:       0,
+  same_generation:  0,
+  nephew_of:       +1,
+  uncle_of:        -1,
+  cousin_of:        0,
 };
 
 export function resolveGeneration(
