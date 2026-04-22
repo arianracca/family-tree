@@ -20,6 +20,8 @@ export interface FamilyRepository {
   deletePerson:   (id: string) => Promise<void>;
   addRelation:    (relation: Relation) => Promise<void>;
   removeRelation: (relation: Relation) => Promise<void>;
+  uploadAvatar:  (personId: string, firstName: string, lastName: string, file: File) => Promise<string>;
+  deleteAvatar:  (personId: string) => Promise<string | null>;
 }
 
 // ─── Implementación API local (Next.js routes → JSON en disco) ────────────────
@@ -77,7 +79,33 @@ const apiRepository: FamilyRepository = {
     });
     if (!res.ok) throw new Error(UI.errorRemoveRel);
   },
+
+  uploadAvatar: async (personId, firstName, lastName, file) => {
+    const formData = new FormData();
+    formData.append("file",      file);
+    formData.append("personId",  personId);
+    formData.append("firstName", firstName);
+    formData.append("lastName",  lastName);
+
+    const res  = await fetch("/api/upload-avatar", { method: "POST", body: formData });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Error al subir el avatar.");
+    return json.photoUrl as string;
+  },
+
+  deleteAvatar: async (personId) => {
+    const res  = await fetch("/api/upload-avatar", {
+      method:  "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ personId }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Error al eliminar el avatar.");
+    return json.previousPhotoUrl as string | null;
+  },
 };
+
+
 
 // ─── Implementación REST futura ───────────────────────────────────────────────
 // export function createRestRepository(baseUrl: string): FamilyRepository {

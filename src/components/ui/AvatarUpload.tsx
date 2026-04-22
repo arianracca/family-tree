@@ -2,30 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
-import { useTreeStore } from "@/store/useTreeStore";
 import styles from "./AvatarUpload.module.css";
-import { error } from "console";
 
 interface Props {
-  personId:        string;
-  firstName:       string;
-  lastName:        string;
+  personId:         string;
+  firstName:        string;
+  lastName:         string;
   currentPhotoUrl?: string | null;
 }
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
-// ─── Labels de UI — preparados para i18n ─────────────────────────────────────
-
 const UI = {
-  avatar:    "Avatar",
-  idle:      "Cambiar foto",
-  uploading: "Subiendo…",
-  success:   "✓ Guardado",
-  ariaUpload:  "Subir foto de perfil",
-  ariaChange:  "Cambiar foto de perfil",
-  ariaRemove:  "Eliminar foto de perfil",
-  titleRemove: "Eliminar foto",
+  avatar:       "Avatar",
+  idle:         "Cambiar foto",
+  uploading:    "Subiendo…",
+  success:      "✓ Guardado",
+  ariaUpload:   "Subir foto de perfil",
+  ariaChange:   "Cambiar foto de perfil",
+  ariaRemove:   "Eliminar foto de perfil",
+  titleRemove:  "Eliminar foto",
   unknownError: "Error desconocido",
   uploadError:  "Error al subir la foto",
   deleteError:  "Error al eliminar la foto",
@@ -47,12 +43,16 @@ export default function AvatarUpload({
     setPreview(currentPhotoUrl ?? null);
   }, [personId, currentPhotoUrl]);
 
-  const updatePerson   = useFamilyStore((s) => s.updatePerson);
-  const updateNodeData = useTreeStore((s) => s.updateNodeData);
+  const executeCommand = useFamilyStore((s) => s.executeCommand);
+
+  function resetInput() {
+    if (inputRef.current) inputRef.current.value = "";
+  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Preview local inmediato — se revierte si el comando falla
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -62,25 +62,19 @@ export default function AvatarUpload({
   async function handleUpload(file: File) {
     setStatus("uploading");
     setErrorMsg(null);
-
-    const formData = new FormData();
-    formData.append("file",      file);
-    formData.append("personId",  personId);
-    formData.append("firstName", firstName);
-    formData.append("lastName",  lastName);
-
     try {
-      const res  = await fetch("/api/upload-avatar", { method: "POST", body: formData });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? UI.unknownError);
-
-      updatePerson(personId, { photoUrl: json.photoUrl });
+      const { UploadAvatarCommand } = await import("@/commands/UploadAvatarCommand");
+      await executeCommand(
+        new UploadAvatarCommand("upload", personId, firstName, lastName, file)
+      );
       setStatus("success");
+      resetInput();
       setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : UI.uploadError);
       setPreview(currentPhotoUrl ?? null);
+      resetInput();
     }
   }
 
@@ -88,15 +82,10 @@ export default function AvatarUpload({
     setStatus("uploading");
     setErrorMsg(null);
     try {
-      const res  = await fetch("/api/upload-avatar", {
-        method:  "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ personId }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? UI.unknownError);
-
-      updatePerson(personId, { photoUrl: null });
+      const { UploadAvatarCommand } = await import("@/commands/UploadAvatarCommand");
+      await executeCommand(
+        new UploadAvatarCommand("delete", personId, firstName, lastName)
+      );
       setPreview(null);
       setStatus("success");
       setTimeout(() => setStatus("idle"), 2000);
