@@ -15,7 +15,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import PersonNode from "./nodes/PersonNode";
 import CoupleNode from "./nodes/CoupleNode";
-import { useElkLayout } from "@/hooks/useElkLayout";
+import { useLayout } from "@/hooks/useLayout";
+import { elkLayoutStrategy } from "@/lib/strategies/ElkLayoutStrategy";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useTreeStore, selectIsLayoutReady } from "@/store/useTreeStore";
 import type { AppNode, AppEdge } from "@/types/graph";
@@ -24,8 +25,8 @@ import type { EdgeTypes } from "@xyflow/react";
 import styles from "./TreeCanvas.module.css";
 
 const UI = {
-  loadingLabel:  "Calculando árbol genealógico…",
-  errorLayout:   "Error al calcular el layout del árbol.",
+  loadingLabel: "Calculando árbol genealógico…",
+  errorLayout:  "Error al calcular el layout del árbol.",
 } as const;
 
 const edgeTypes: EdgeTypes = {
@@ -39,8 +40,8 @@ const nodeTypes = {
 };
 
 function TreeCanvasInner() {
-  const { fitView }    = useReactFlow();
-  const hasAutoFit     = useRef(false);
+  const { fitView }  = useReactFlow();
+  const hasAutoFit   = useRef(false);
 
   const nodes        = useTreeStore((s) => s.nodes) as AppNode[];
   const edges        = useTreeStore((s) => s.edges) as AppEdge[];
@@ -52,7 +53,9 @@ function TreeCanvasInner() {
   const selectPerson   = useFamilyStore((s) => s.selectPerson);
   const clearSelection = useFamilyStore((s) => s.clearSelection);
 
-  useElkLayout();
+  // ── Estrategia de layout inyectada aquí ───────────────────────────────────
+  // Para cambiar el algoritmo (ej: circular), basta con pasar otra estrategia.
+  useLayout(elkLayoutStrategy);
 
   useEffect(() => {
     if (isReady && !hasAutoFit.current) {
@@ -88,9 +91,7 @@ function TreeCanvasInner() {
     return (
       <div className={styles.errorState}>
         <span className={styles.errorIcon}>⚠</span>
-        <p className={styles.errorMessage}>
-          {UI.errorLayout}
-        </p>
+        <p className={styles.errorMessage}>{UI.errorLayout}</p>
       </div>
     );
   }
@@ -100,9 +101,7 @@ function TreeCanvasInner() {
       {layoutStatus === "loading" && (
         <div className={styles.loading} aria-label={UI.loadingLabel}>
           <div className={styles.spinner} />
-          <span className={styles.loadingLabel}>
-            {UI.loadingLabel}
-          </span>
+          <span className={styles.loadingLabel}>{UI.loadingLabel}</span>
         </div>
       )}
 
