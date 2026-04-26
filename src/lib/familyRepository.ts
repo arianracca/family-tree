@@ -11,6 +11,8 @@ export interface FamilyRepository {
   deletePerson:   (id: string) => Promise<void>;
   addRelation:    (relation: Relation) => Promise<void>;
   removeRelation: (relation: Relation) => Promise<void>;
+  uploadAvatar:  (personId: string, firstName: string, lastName: string, file: File) => Promise<string>;
+  deleteAvatar:  (personId: string) => Promise<string | null>;
 }
 
 // ─── Implementación API local (Next.js routes → JSON en disco) ────────────────
@@ -18,7 +20,7 @@ export interface FamilyRepository {
 const apiRepository: FamilyRepository = {
   getAll: async () => {
     const res = await fetch("/api/family", { cache: "no-store" });
-    if (!res.ok) throw new Error("Error al cargar los datos");
+    if (!res.ok) throw new Error("ERR_FETCH_DATA");
     return res.json();
   },
 
@@ -28,7 +30,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Error al crear la persona");
+    if (!res.ok) throw new Error("ERR_CREATE_PERSON");
     return res.json();
   },
 
@@ -38,7 +40,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id, ...updates }),
     });
-    if (!res.ok) throw new Error("Error al actualizar la persona");
+    if (!res.ok) throw new Error("ERR_UPDATE_PERSON");
     return res.json();
   },
 
@@ -48,7 +50,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id }),
     });
-    if (!res.ok) throw new Error("Error al eliminar la persona");
+    if (!res.ok) throw new Error("ERR_DELETE_PERSON");
   },
 
   addRelation: async (relation) => {
@@ -57,7 +59,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error("Error al agregar la relación");
+    if (!res.ok) throw new Error("ERR_ADD_RELATION");
   },
 
   removeRelation: async (relation) => {
@@ -66,9 +68,35 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error("Error al eliminar la relación");
+    if (!res.ok) throw new Error("ERR_REMOVE_RELATION");
+  },
+
+  uploadAvatar: async (personId, firstName, lastName, file) => {
+    const formData = new FormData();
+    formData.append("file",      file);
+    formData.append("personId",  personId);
+    formData.append("firstName", firstName);
+    formData.append("lastName",  lastName);
+
+    const res  = await fetch("/api/upload-avatar", { method: "POST", body: formData });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "ERR_UPLOAD_AVATAR");
+    return json.photoUrl as string;
+  },
+
+  deleteAvatar: async (personId) => {
+    const res  = await fetch("/api/upload-avatar", {
+      method:  "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ personId }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "ERR_DELETE_AVATAR");
+    return json.previousPhotoUrl as string | null;
   },
 };
+
+
 
 // ─── Implementación REST futura ───────────────────────────────────────────────
 // export function createRestRepository(baseUrl: string): FamilyRepository {
@@ -86,20 +114,3 @@ const apiRepository: FamilyRepository = {
 // Para cambiar a REST: export const activeRepository = createRestRepository("https://api.tudominio.com");
 
 export const activeRepository: FamilyRepository = apiRepository;
-
-// ─── Helper para hooks y componentes ─────────────────────────────────────────
-// Mantiene compatibilidad con el código existente que usaba createLocalRepository
-
-export function createLocalRepository(
-  _getState: () => { familyData: FamilyData },
-  _actions: {
-    addPerson:      (p: Person) => void;
-    updatePerson:   (id: string, updates: Partial<Person>) => void;
-    removePerson:   (id: string) => void;
-    addRelation:    (r: Relation) => void;
-    removeRelation: (r: Relation) => void;
-  }
-): FamilyRepository {
-  // Ahora delega al apiRepository en lugar de operar en memoria
-  return apiRepository;
-}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir, readFile } from "fs/promises";
+import { writeFile, mkdir, readFile, readdir } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import type { FamilyData } from "@/types/family";
@@ -7,6 +7,7 @@ import type { FamilyData } from "@/types/family";
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const DATA_PATH = path.join(process.cwd(), "data", "familyData.json");
+const MAX_AVATARS = 100; // 00–99
 
 const ALLOWED_MIME: Record<string, string> = {
   "image/jpeg":    "jpg",
@@ -35,11 +36,35 @@ async function writeData(data: FamilyData): Promise<void> {
   await writeFile(DATA_PATH, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// ─── POST ─────────────────────────────────────────────────────────────────────
+/**
+ * Calcula el siguiente índice de avatar disponible en la carpeta.
+ * Lee los archivos existentes con patrón NN.Avatar.webp y devuelve
+ * el siguiente número. Si ya hay MAX_AVATARS archivos, reutiliza el 00
+ * (límite de seguridad, en la práctica nunca se alcanza).
+ */
+async function nextAvatarIndex(folderPath: string): Promise<string> {
+  try {
+    const files = await readdir(folderPath);
+    const indices = files
+      .map((f) => f.match(/^(\d{2})\.Avatar\.webp$/))
+      .filter(Boolean)
+      .map((m) => parseInt(m![1], 10));
+
+    if (indices.length === 0) return "00";
+    const max = Math.max(...indices);
+    const next = (max + 1) % MAX_AVATARS;
+    return next.toString().padStart(2, "0");
+  } catch {
+    // La carpeta no existe todavía
+    return "00";
+  }
+}
+
+// ─── POST — subir o reemplazar avatar ────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
-    const formData     = await req.formData();
+    const formData  = await req.formData();
     const file      = formData.get("file")      as File   | null;
     const personId  = formData.get("personId")  as string | null;
     const firstName = formData.get("firstName") as string | null;
@@ -60,40 +85,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Guardar imagen en /public ─────────────────────────────────────────────
-
     const slug       = buildFolderSlug(personId, firstName, lastName);
     const folderPath = path.join(process.cwd(), "public", "persons", slug);
-    const fileName   = "00.Avatar.webp";
-    const filePath   = path.join(folderPath, fileName);
-    const publicUrl  = `/persons/${slug}/${fileName}`;
 
     await mkdir(folderPath, { recursive: true });
 
-    // Convertir y comprimir a WebP independientemente del formato original
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // ── Numeración incremental — nunca sobreescribe ───────────────────────
+    const index    = await nextAvatarIndex(folderPath);
+    const fileName = `${index}.Avatar.webp`;
+    const filePath = path.join(folderPath, fileName);
+    const publicUrl = `/persons/${slug}/${fileName}`;
+
+    const buffer     = Buffer.from(await file.arrayBuffer());
     const webpBuffer = await sharp(buffer)
       .webp({ quality: 100, effort: 5 })
       .toBuffer();
 
     await writeFile(filePath, webpBuffer);
 
-    // ── Actualizar photoUrl en el JSON ────────────────────────────────────────
-
+    // ── Actualizar photoUrl en el JSON ────────────────────────────────────
     const data  = await readData();
-    const index = data.persons.findIndex((p) => p.id === personId);
+    const index2 = data.persons.findIndex((p) => p.id === personId);
 
-    if (index === -1) {
+    if (index2 === -1) {
       return NextResponse.json(
         { error: `Persona ${personId} no encontrada` },
         { status: 404 }
       );
     }
 
-    data.persons[index] = { ...data.persons[index], photoUrl: publicUrl };
+    data.persons[index2] = { ...data.persons[index2], photoUrl: publicUrl };
     await writeData(data);
 
-    // Cache buster para forzar re-fetch de la imagen en el browser
     const cacheBuster = Date.now();
     return NextResponse.json(
       { photoUrl: `${publicUrl}?v=${cacheBuster}` },
@@ -101,15 +124,15 @@ export async function POST(req: NextRequest) {
     );
 
   } catch (err) {
-    console.error("[upload-avatar]", err);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    console.error("[upload-avatar POST]", err);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
 
-// ─── DELETE ───────────────────────────────────────────────────────────────────
+// ─── DELETE — limpiar photoUrl (el archivo físico lo limpia el batch) ────────
+// No borra el archivo físico — eso es responsabilidad del proceso batch.
+// Solo pone photoUrl: null en el JSON para que el undo pueda restaurar
+// el valor anterior apuntando al archivo que sigue existiendo en disco.
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -129,30 +152,13 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Intentar borrar el archivo físico si existe
-    const currentUrl = data.persons[index].photoUrl;
-    if (currentUrl) {
-      try {
-        const { unlink, readdir, rmdir } = await import("fs/promises");
-        // Quitar query string (?v=...) antes de construir la ruta
-        const cleanUrl  = currentUrl.split("?")[0];
-        const filePath  = path.join(process.cwd(), "public", cleanUrl);
-        await unlink(filePath);
+    const previousPhotoUrl = data.persons[index].photoUrl ?? null;
 
-        // Borrar la carpeta si quedó vacía
-        const folderPath = path.dirname(filePath);
-        const remaining  = await readdir(folderPath);
-        if (remaining.length === 0) await rmdir(folderPath);
-      } catch {
-        // Si el archivo no existe no es un error crítico, seguimos
-      }
-    }
-
-    // Limpiar photoUrl en el JSON
     data.persons[index] = { ...data.persons[index], photoUrl: null };
     await writeData(data);
 
-    return NextResponse.json({ ok: true });
+    // Devuelve la URL anterior para que el comando pueda capturarla en el snapshot
+    return NextResponse.json({ ok: true, previousPhotoUrl });
 
   } catch (err) {
     console.error("[upload-avatar DELETE]", err);

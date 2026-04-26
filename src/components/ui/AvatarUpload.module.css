@@ -1,0 +1,113 @@
+.upload {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.trigger {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-mid);
+  background: var(--color-bg-node);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.trigger:hover    { border-color: var(--color-gold-40); }
+.trigger:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius-full);
+}
+
+.placeholder {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--color-text-gold);
+  letter-spacing: 0.05em;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: #00000088;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.trigger:hover .overlay,
+.overlay[data-status='uploading'] { opacity: 1; }
+
+.icon { font-size: 20px; color: var(--color-text-gold); line-height: 1; }
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-gold);
+  border-radius: var(--radius-full);
+  animation: spin 700ms linear infinite;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-delete);
+  border: 1px solid var(--color-border-danger);
+  color: var(--color-text-danger);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.removeBtn:hover {
+  background: #3a1010;
+  border-color: var(--color-border-danger);
+  color: var(--color-danger-light);
+}
+
+.status {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+  transition: color var(--transition-fast);
+}
+
+.status[data-status='success']   { color: var(--color-text-success); }
+.status[data-status='error']     { color: var(--color-text-danger); }
+.status[data-status='uploading'] { color: var(--color-gold-50); }
+
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -1,0 +1,258 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--font-serif);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border-dim);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ─── Field ──────────────────────────────────────────────────────────────────*/
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+}
+
+/* ─── Input ──────────────────────────────────────────────────────────────────*/
+
+.input {
+  width: 100%;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  padding: 7px 10px;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+  resize: none;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-gold-40);
+}
+
+.inputTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.hint {
+  font-size: 10px;
+  color: var(--color-text-ghost);
+  font-style: italic;
+}
+
+/* ─── Toggle ─────────────────────────────────────────────────────────────────*/
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-border-default);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toggle[data-active='true'] {
+  background: var(--color-gold-25);
+  border: 1px solid var(--color-gold-40);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-faint);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.toggle[data-active='true'] .toggleKnob {
+  transform: translateX(16px);
+  background: var(--color-text-gold);
+}
+
+.toggleLabel {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ─── Chips ──────────────────────────────────────────────────────────────────*/
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--color-bg-chip);
+  border: 1px solid var(--color-border-mid);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.chipRemove {
+  background: none;
+  border: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.chipRemove:hover { color: var(--color-text-gold); }
+
+.chipInputRow {
+  display: flex;
+  gap: 6px;
+}
+
+.chipInputRow .input { flex: 1; }
+
+/* ─── Custom fields ──────────────────────────────────────────────────────────*/
+
+.customField {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ─── Generación ─────────────────────────────────────────────────────────────*/
+
+.genDisplay {
+  font-size: 11px;
+  color: var(--color-text-faint);
+  margin: 0;
+}
+
+.genDisplay strong { color: var(--color-text-gold); }
+
+/* ─── Botones ────────────────────────────────────────────────────────────────*/
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.03em;
+}
+
+.btnPrimary {
+  background: var(--color-gold-20);
+  border: 1px solid var(--color-gold-40);
+  color: var(--color-text-gold);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-gold-25);
+  border-color: var(--color-gold);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnGhost {
+  background: none;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-faint);
+}
+
+.btnGhost:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.btnRemove {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-faint);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.btnRemove:hover {
+  border-color: var(--color-border-danger);
+  color: var(--color-text-danger);
+}
+
+.btnAddField {
+  align-self: flex-start;
+  font-size: 11px;
+  padding: 5px 12px;
+}
+
+/* ─── Error ──────────────────────────────────────────────────────────────────*/
+
+.error {
+  font-size: 11px;
+  color: var(--color-text-danger);
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--color-bg-error);
+  border: 1px solid #2a1010;
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,89 @@
+/* ─── Contenedor del panel lateral ──────────────────────────────────────────*/
+
+.panel {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: var(--panel-width);
+  background: var(--color-bg-primary);
+  border-left: 1px solid var(--color-border-dim);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  animation: panelIn var(--transition-slow) both;
+  font-family: var(--font-serif);
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Divisor ────────────────────────────────────────────────────────────────*/
+
+.divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold-40) 30%,
+    var(--color-gold-40) 70%,
+    transparent
+  );
+  flex-shrink: 0;
+  margin: 0 16px;
+}
+
+/* ─── Body scrolleable ───────────────────────────────────────────────────────*/
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+/* ─── Skeleton de carga ──────────────────────────────────────────────────────*/
+
+.skeleton {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: var(--panel-width);
+  background: var(--color-bg-primary);
+  border-left: 1px solid var(--color-border-dim);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skeletonBar {
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--color-border-dim) 25%,
+    var(--color-border-default) 50%,
+    var(--color-border-dim) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+.skeletonBarTitle  { height: 18px; width: 60%; margin-bottom: 8px; }
+.skeletonBarShort  { width: 40%; }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.formWrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

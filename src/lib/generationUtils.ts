@@ -1,36 +1,36 @@
 import type { Person } from "@/types/family";
 
-// ─── Tipos exportados que GenerationPicker necesita ──────────────────────────
+// ─── Tipo con claves lógicas — sin espacios, aptas para next-intl ────────────
 
 export type RelationshipType =
-  | "hijo/a de"
-  | "padre/madre de"
-  | "pareja de"
-  | "misma generación que"
-  | "sobrino/a de"
-  | "tío/a de"
-  | "primo/a de";
+  | "child_of"
+  | "parent_of"
+  | "partner_of"
+  | "same_generation"
+  | "nephew_of"
+  | "uncle_of"
+  | "cousin_of";
 
 export const RELATIONSHIP_OPTIONS: RelationshipType[] = [
-  "hijo/a de",
-  "padre/madre de",
-  "pareja de",
-  "misma generación que",
-  "sobrino/a de",
-  "tío/a de",
-  "primo/a de",
+  "child_of",
+  "parent_of",
+  "partner_of",
+  "same_generation",
+  "nephew_of",
+  "uncle_of",
+  "cousin_of",
 ];
 
-// ─── Delta de generación por tipo de relación ────────────────────────────────
+// ─── Delta de generación por tipo de relación ─────────────────────────────────
 
 const GENERATION_DELTA: Record<RelationshipType, number> = {
-  "hijo/a de":           +1,
-  "padre/madre de":      -1,
-  "pareja de":            0,
-  "misma generación que": 0,
-  "sobrino/a de":        +1,
-  "tío/a de":            -1,
-  "primo/a de":           0,
+  child_of:        +1,
+  parent_of:       -1,
+  partner_of:       0,
+  same_generation:  0,
+  nephew_of:       +1,
+  uncle_of:        -1,
+  cousin_of:        0,
 };
 
 export function resolveGeneration(

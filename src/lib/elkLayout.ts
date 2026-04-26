@@ -1,14 +1,15 @@
 import ELK, { ElkNode, ElkExtendedEdge } from "elkjs/lib/elk.bundled.js";
 import type { FamilyData, CoupleRelation } from "@/types/family";
 import type { ElkNodeMeta, ElkLayoutOutput } from "@/types/graph";
-
-// ─── Constantes ───────────────────────────────────────────────────────────────
-
-const NODE_WIDTH  = 180;
-const NODE_HEIGHT = 80;
-
-// ── 1. Constante de separación entre layers ───────────────────────────────
-const LAYER_HEIGHT = NODE_HEIGHT + 120; // altura nodo + espaciado entre layers
+import {
+  NODE_WIDTH,
+  NODE_HEIGHT,
+  COUPLE_PADDING,
+  COUPLE_GAP,
+  COUPLE_WIDTH,
+  COUPLE_HEIGHT,
+  LAYER_HEIGHT,
+} from "@/lib/layoutConstants";
 
 // ─── ELK instance ────────────────────────────────────────────────────────────
 
@@ -58,16 +59,14 @@ export async function computeElkLayout(
 
   const coupleElkNodes: ElkNode[] = couples.map((couple) => {
     const coupleId       = getCoupleId(couple.persons);
-    const compoundWidth  = NODE_WIDTH * 2 + 16 + 12 * 2;
-    const compoundHeight = NODE_HEIGHT + 12 * 2;
 
     const gen        = persons.find((p) => p.id === couple.persons[0])!.generation;
     const layerIndex = generationToLayer.get(gen) ?? 0;
 
     return {
       id: coupleId,
-      width: compoundWidth,
-      height: compoundHeight,
+      width: COUPLE_WIDTH,
+      height: COUPLE_HEIGHT,
     };
   });
 
@@ -159,8 +158,8 @@ export async function computeElkLayout(
       const couple = couples.find((c) => getCoupleId(c.persons) === node.id);
 
       if (couple) {
-        const PADDING = 12;
-        const GAP     = 16;
+        const PADDING = COUPLE_PADDING;
+        const GAP     = COUPLE_GAP;
 
         nodeMeta.set(node.id, {
           id: node.id,
@@ -203,16 +202,6 @@ export async function computeElkLayout(
   }
 
   extractPositions(layouted.children ?? []);
-  
-  // LOG TEMPORAL — borrar después
-  console.table(
-    [...positions.entries()].map(([id, pos]) => ({
-      id,
-      ...pos,
-      gen: nodeMeta.get(id)?.generation,
-      type: nodeMeta.get(id)?.nodeType,
-    }))
-  );
 
 // ── 8. Posicionar nodos huérfanos manualmente ─────────────────────────────
   //
@@ -298,8 +287,8 @@ for (const orphan of [...orphanCouples, ...orphanSolos]) {
   orphanCursorX -= ORPHAN_MARGIN;
 
   if (couple) {
-    const PADDING = 12;
-    const GAP     = 16;
+    const PADDING = COUPLE_PADDING;
+    const GAP     = COUPLE_GAP;
 
     nodeMeta.set(orphan.id, { id: orphan.id, nodeType: "couple", generation: gen });
 

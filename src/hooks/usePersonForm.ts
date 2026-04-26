@@ -1,29 +1,30 @@
-import { useState, useCallback, useMemo } from "react";
+"use client";
+
+import { useState, useCallback } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
-import { createLocalRepository } from "@/lib/familyRepository";
+import { resolveError } from "@/lib/errorMessages";
+import { useTranslations } from "next-intl";
 import type { Person, Relation, CustomField, CoupleRelation, ParentChildRelation } from "@/types/family";
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
 export interface PersonFormData {
-  firstName:    string;
-  middleName:   string;
-  lastName:     string;
+  firstName:      string;
+  middleName:     string;
+  lastName:       string;
   motherLastName: string;
-  birthPlace:   string;
-  birthDate:    string;
-  deathDate:    string;
-  nationalities: string[];
-  city:         string;
-  isAlive:      boolean;
-  generation:   number | null;
-  history:      string;
-  photoUrl:     string | null;
-  customFields: CustomField[];
-  coupleId:     string | null;
-  coupleActive: boolean;
-  parentIds:    string[];
-  childrenIds:  string[];
+  birthPlace:     string;
+  birthDate:      string;
+  deathDate:      string;
+  nationalities:  string[];
+  city:           string;
+  isAlive:        boolean;
+  generation:     number | null;
+  history:        string;
+  photoUrl:       string | null;
+  customFields:   CustomField[];
+  coupleId:       string | null;
+  coupleActive:   boolean;
+  parentIds:      string[];
+  childrenIds:    string[];
 }
 
 export type FormMode = "create" | "edit";
@@ -44,8 +45,6 @@ export interface UsePersonFormReturn {
   reset:             () => void;
 }
 
-// ─── Valores por defecto ──────────────────────────────────────────────────────
-
 export function emptyFormData(): PersonFormData {
   return {
     firstName: "", middleName: "", lastName: "", motherLastName: "",
@@ -56,52 +55,51 @@ export function emptyFormData(): PersonFormData {
   };
 }
 
-export function personToFormData(person: Person, relations: Relation[]): PersonFormData {
+export function personToFormData(
+  person: Person,
+  relations: Relation[]
+): PersonFormData {
   const coupleRel = relations.find(
-    (r): r is CoupleRelation => r.type === "couple" && r.persons.includes(person.id)
+    (r): r is CoupleRelation =>
+      r.type === "couple" && r.persons.includes(person.id)
   );
   const partnerId = coupleRel
     ? coupleRel.persons.find((id) => id !== person.id) ?? null
     : null;
 
   const parentIds = relations
-    .filter((r): r is ParentChildRelation => r.type === "parent-child" && r.to === person.id)
+    .filter((r): r is ParentChildRelation =>
+      r.type === "parent-child" && r.to === person.id
+    )
     .map((r) => r.from);
 
   const childrenIds = relations
-    .filter((r): r is ParentChildRelation => r.type === "parent-child" && r.from === person.id)
+    .filter((r): r is ParentChildRelation =>
+      r.type === "parent-child" && r.from === person.id
+    )
     .map((r) => r.to);
 
   return {
     firstName:      person.firstName,
-    middleName:     person.middleName     ?? "",
+    middleName:     person.middleName      ?? "",
     lastName:       person.lastName,
-    motherLastName: person.motherLastName ?? "",
-    birthPlace:     person.birthPlace     ?? "",
-    birthDate:      person.birthDate      ?? "",
-    deathDate:      person.deathDate      ?? "",
-    nationalities:  person.nationalities  ?? [],
-    city:           person.city           ?? "",
+    motherLastName: person.motherLastName  ?? "",
+    birthPlace:     person.birthPlace      ?? "",
+    birthDate:      person.birthDate       ?? "",
+    deathDate:      person.deathDate       ?? "",
+    nationalities:  person.nationalities   ?? [],
+    city:           person.city            ?? "",
     isAlive:        person.isAlive,
     generation:     person.generation,
-    history:        person.history        ?? "",
-    photoUrl:       person.photoUrl       ?? null,
-    customFields:   person.customFields   ?? [],
+    history:        person.history         ?? "",
+    photoUrl:       person.photoUrl        ?? null,
+    customFields:   person.customFields    ?? [],
     coupleId:       partnerId,
-    coupleActive:   coupleRel?.active     ?? true,
+    coupleActive:   coupleRel?.active      ?? true,
     parentIds,
     childrenIds,
   };
 }
-
-function validate(data: PersonFormData): string | null {
-  if (!data.firstName.trim()) return "El Nombre es obligatorio.";
-  if (!data.lastName.trim())  return "El Apellido es obligatorio.";
-  if (data.generation === null) return "Definí la generación usando el selector de relación.";
-  return null;
-}
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 interface UsePersonFormOptions {
   mode:       FormMode;
@@ -109,32 +107,20 @@ interface UsePersonFormOptions {
   onSuccess?: () => void;
 }
 
-export function usePersonForm({ mode, personId, onSuccess }: UsePersonFormOptions): UsePersonFormReturn {
-  const persons   = useFamilyStore((s) => s.familyData.persons);
-  const relations = useFamilyStore((s) => s.familyData.relations);
+export function usePersonForm({
+  mode,
+  personId,
+  onSuccess,
+}: UsePersonFormOptions): UsePersonFormReturn {
 
-  // Acciones atómicas — referencias estables en Zustand
-  const addPerson      = useFamilyStore((s) => s.addPerson);
-  const updatePerson   = useFamilyStore((s) => s.updatePerson);
-  const removePerson   = useFamilyStore((s) => s.removePerson);
-  const addRelation    = useFamilyStore((s) => s.addRelation);
-  const removeRelation = useFamilyStore((s) => s.removeRelation);
+  const tErrors = useTranslations("errors");
   const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
-
-
-  // Repository estable
-  const repository = useMemo(
-    () => createLocalRepository(
-      () => ({ familyData: useFamilyStore.getState().familyData }),
-      { addPerson, updatePerson, removePerson, addRelation, removeRelation }
-    ),
-    [addPerson, updatePerson, removePerson, addRelation, removeRelation]
-  );
 
   const buildInitial = useCallback((): PersonFormData => {
     if (mode === "edit" && personId) {
-      const person = useFamilyStore.getState().familyData.persons.find((p) => p.id === personId);
-      if (person) return personToFormData(person, useFamilyStore.getState().familyData.relations);
+      const { persons, relations } = useFamilyStore.getState().familyData;
+      const person = persons.find((p) => p.id === personId);
+      if (person) return personToFormData(person, relations);
     }
     return emptyFormData();
   }, [mode, personId]);
@@ -149,90 +135,82 @@ export function usePersonForm({ mode, personId, onSuccess }: UsePersonFormOption
     }, []
   );
 
-  const setGeneration      = useCallback((gen: number) => setFormData((p) => ({ ...p, generation: gen })), []);
-  const addNationality    = useCallback((value: string) => {
-    const t = value.trim(); if (!t) return;
-    setFormData((p) => ({ ...p, nationalities: [...p.nationalities, t] }));
+  const setGeneration = useCallback(
+    (gen: number) => setFormData((p) => ({ ...p, generation: gen })), []
+  );
+
+  const addNationality = useCallback((value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    setFormData((p) => ({ ...p, nationalities: [...p.nationalities, trimmed] }));
   }, []);
-  const removeNationality = useCallback((i: number) =>
-  setFormData((p) => ({ ...p, nationalities: p.nationalities.filter((_, idx) => idx !== i) })), []);
-  const addCustomField     = useCallback(() =>
-    setFormData((p) => ({ ...p, customFields: [...p.customFields, { key: `field_${Date.now()}`, label: "", value: "" }] })), []);
-  const updateCustomField = useCallback((i: number, field: Partial<CustomField>) =>
-    setFormData((p) => {
-      const updated = [...p.customFields];
-      updated[i] = { ...updated[i], ...field };
-      return { ...p, customFields: updated };
-    }), []);
-  const removeCustomField  = useCallback((i: number) =>
-    setFormData((p) => ({ ...p, customFields: p.customFields.filter((_, idx) => idx !== i) })), []);
+
+  const removeNationality = useCallback(
+    (i: number) => setFormData((p) => ({
+      ...p,
+      nationalities: p.nationalities.filter((_, idx) => idx !== i),
+    })), []
+  );
+
+  const addCustomField = useCallback(
+    () => setFormData((p) => ({
+      ...p,
+      customFields: [
+        ...p.customFields,
+        { key: `field_${Date.now()}`, label: "", value: "" },
+      ],
+    })), []
+  );
+
+  const updateCustomField = useCallback(
+    (i: number, field: Partial<CustomField>) =>
+      setFormData((p) => {
+        const updated = [...p.customFields];
+        updated[i] = { ...updated[i], ...field };
+        return { ...p, customFields: updated };
+      }), []
+  );
+
+  const removeCustomField = useCallback(
+    (i: number) => setFormData((p) => ({
+      ...p,
+      customFields: p.customFields.filter((_, idx) => idx !== i),
+    })), []
+  );
 
   const submit = useCallback(async () => {
-    const validationError = validate(formData);
-    if (validationError) { setError(validationError); return; }
-
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const personPayload: Omit<Person, "id"> = {
-        firstName:      formData.firstName.trim(),
-        middleName:     formData.middleName.trim()     || null,
-        lastName:       formData.lastName.trim(),
-        motherLastName: formData.motherLastName.trim() || null,
-        birthPlace:     formData.birthPlace.trim()     || null,
-        birthDate:      formData.birthDate             || null,
-        deathDate:      formData.deathDate             || null,
-        nationalities:  formData.nationalities,
-        city:           formData.city.trim()           || null,
-        isAlive:        formData.isAlive,
-        generation:     formData.generation!,
-        history:        formData.history.trim()        || null,
-        photoUrl:       formData.photoUrl,
-        customFields:   formData.customFields.filter((f) => f.label.trim() && f.value.trim()),
-      };
+      const { relations, persons } = useFamilyStore.getState().familyData;
+      const allPersonIds = persons.map((p) => p.id);
+      const executeCommand = useFamilyStore.getState().executeCommand;
 
-      let savedId: string;
       if (mode === "create") {
-        const created = await repository.createPerson(personPayload);
-        savedId = created.id;
+        const { CreatePersonCommand } = await import("@/commands/CreatePersonCommand");
+        await executeCommand(
+          new CreatePersonCommand(formData, relations, allPersonIds)
+        );
       } else {
-        await repository.updatePerson(personId!, personPayload);
-        savedId = personId!;
+        const person = persons.find((p) => p.id === personId);
+        const displayName = person
+          ? `${person.firstName} ${person.lastName}`
+          : personId!;
+        const { UpdatePersonCommand } = await import("@/commands/UpdatePersonCommand");
+        await executeCommand(
+          new UpdatePersonCommand(personId!, formData, relations, allPersonIds, displayName)
+        );
       }
 
-      // Leer relaciones actuales del store directamente (no del closure)
-      const currentRelations = useFamilyStore.getState().familyData.relations;
-      const existingRelations = currentRelations.filter((r) => {
-        if (r.type === "parent-child") return r.from === savedId || r.to === savedId;
-        if (r.type === "couple")       return r.persons.includes(savedId);
-        return false;
-      });
-
-      for (const rel of existingRelations) await repository.removeRelation(rel);
-
-      if (formData.coupleId) {
-        await repository.addRelation({
-          type: "couple",
-          persons: [savedId, formData.coupleId] as [string, string],
-          active: formData.coupleActive,
-        });
-      }
-      for (const parentId of formData.parentIds) {
-        await repository.addRelation({ type: "parent-child", from: parentId, to: savedId });
-      }
-      for (const childId of formData.childrenIds) {
-        await repository.addRelation({ type: "parent-child", from: savedId, to: childId });
-      }
-    
-      await loadFamilyData(); 
       onSuccess?.();
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar.");
+      setError(resolveError(err, tErrors));
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, mode, personId, repository, loadFamilyData, onSuccess]);
+  }, [formData, mode, personId, onSuccess, tErrors]);
 
   const reset = useCallback(() => {
     setFormData(buildInitial());

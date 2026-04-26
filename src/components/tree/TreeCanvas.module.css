@@ -1,0 +1,66 @@
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg-canvas);
+}
+
+.canvas :global(.react-flow) {
+  background: var(--color-bg-canvas);
+}
+
+.canvas :global(.react-flow__edge-path) {
+  stroke: var(--color-border-mid);
+  stroke-width: 1.5;
+}
+
+.canvas :global(.react-flow__edge.selected .react-flow__edge-path),
+.canvas :global(.react-flow__edge:hover .react-flow__edge-path) {
+  stroke: var(--color-gold-55);
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(4px);
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-gold);
+  border-radius: var(--radius-full);
+  animation: spin 700ms linear infinite;
+}
+
+.loadingLabel {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--color-text-faint);
+  letter-spacing: 0.05em;
+}
+
+.errorState {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--color-bg-canvas);
+  font-family: var(--font-serif);
+}
+
+.errorIcon    { font-size: 24px; color: var(--color-text-faint); }
+.errorMessage { font-size: 13px; color: var(--color-text-faint); letter-spacing: 0.03em; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
