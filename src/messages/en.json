@@ -128,5 +128,9 @@
     "ERR_UPLOAD_AVATAR": "Error uploading photo.",
     "ERR_DELETE_AVATAR": "Error deleting photo.",
     "fallback": "Unexpected error."
+  },
+  "primitives": {
+    "addHint": "Press Enter to add",
+    "removeHint": "Remove"
   }
 }

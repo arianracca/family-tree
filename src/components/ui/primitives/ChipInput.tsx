@@ -1,11 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import styles from "./ChipInput.module.css";
 
-const UI = {
-  hint:            "Enter para agregar",
-} as const;
+
 
 interface Props {
   values:      string[];
@@ -15,11 +14,13 @@ interface Props {
   inputClassName?: string;
 }
 
+const t = useTranslations("primitives");
+
 export default function ChipInput({
   values,
   onAdd,
   onRemove,
-  placeholder = UI.hint,
+  placeholder = t("addHint"),
   inputClassName,
 }: Props) {
   const [input, setInput] = useState("");

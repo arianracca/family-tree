@@ -128,5 +128,9 @@
     "ERR_UPLOAD_AVATAR": "Errore nel caricamento della foto.",
     "ERR_DELETE_AVATAR": "Errore nella rimozione della foto.",
     "fallback": "Errore imprevisto."
+  },
+  "primitives": {
+    "addHint": "Premi Invio per aggiungere",
+    "removeHint": "Rimuovi"
   }
 }
