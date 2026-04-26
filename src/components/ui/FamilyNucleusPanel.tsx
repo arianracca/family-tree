@@ -11,42 +11,7 @@ import styles from "@/components/ui/FamilyNucleusPanel.module.css";
 import FieldRow from "@/components/ui/primitives/FieldRow";
 import IconButton from "@/components/ui/primitives/IconButton";
 import PanelHeader from "@/components/ui/primitives/PanelHeader";
-import { FamilyService } from "@/services/FamilyService";
-
-const UI = {
-  labelNucleus:  "Núcleo familiar",
-  labelEdit:     "Editando",
-  labelCreate:   "Nueva persona",
-  titleCreate:   "Agregar al árbol",
-  btnEdit:       "Editar persona",
-  btnDelete:     "Eliminar persona",
-  btnClose:      "Cerrar panel",
-  btnCloseEdit:  "Cerrar edición",
-  deleteConfirm: (name: string) => `¿Eliminar a ${name}? Se borrarán también todas sus relaciones.`,
-  deleteCancel:  "Cancelar",
-  deleteAction:  "Eliminar",
-  roleParent:    "Padre / Madre",
-  roleChild:     "Hijo / Hija",
-  rolePartner:   "Pareja",
-  roleInlaw:     "Suegro / Suegra",
-  sectionData:         "Datos",
-  sectionHistory:      "Historia",
-  sectionOther:        "Otros datos",
-  sectionPartner:      "Pareja",
-  sectionParents:      "Padres",
-  sectionParentsOf:    (name: string) => `Padres de ${name}`,
-  partnerFallback:     "pareja",   // ← fallback cuando no se resuelve el nombre
-  sectionChildren:     "Hijos",
-  emptyRelations:      "Sin relaciones registradas.",
-  fieldBirthPlace:     "Lugar nacimiento",
-  fieldCity:           "Ciudad",
-  fieldBirthDate:      "Nacimiento",
-  fieldDeathDate:      "Fallecimiento",
-  fieldNationalities:  "Nacionalidades",
-  deceased:            "Fallecido",
-} as const;
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+import { useTranslations } from "next-intl";
 
 type PanelMode = "view" | "edit" | "create";
 
@@ -54,15 +19,6 @@ interface PersonRowProps {
   personId: string;
   role: "parent" | "child" | "partner" | "inlaw";
 }
-
-const roleLabel: Record<PersonRowProps["role"], string> = {
-  parent:  UI.roleParent,
-  child:   UI.roleChild,
-  partner: UI.rolePartner,
-  inlaw:   UI.roleInlaw,
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fullName(p: Pick<Person, "firstName" | "middleName" | "lastName">): string {
   return [p.firstName, p.middleName, p.lastName].filter(Boolean).join(" ");
@@ -72,9 +28,8 @@ function initials(p: Pick<Person, "firstName" | "lastName">): string {
   return p.firstName.charAt(0).toUpperCase() + p.lastName.charAt(0).toUpperCase();
 }
 
-// ─── PersonRow ────────────────────────────────────────────────────────────────
-
 function PersonRow({ personId, role }: PersonRowProps) {
+  const t          = useTranslations("panel");
   const person       = useFamilyStore((s) => s.familyData.persons.find((p) => p.id === personId));
   const selectPerson = useFamilyStore((s) => s.selectPerson);
   const centerOnNode = useTreeStore((s) => s.centerOnNode);
@@ -83,6 +38,13 @@ function PersonRow({ personId, role }: PersonRowProps) {
 
   const name = fullName(person);
   const ini  = initials(person);
+
+  const roleLabel: Record<PersonRowProps["role"], string> = {
+    parent:  t("roleParent"),
+    child:   t("roleChild"),
+    partner: t("rolePartner"),
+    inlaw:   t("roleInlaw"),
+  };
 
   const photoSrc = person.photoUrl
     ? person.photoUrl.includes("?") ? person.photoUrl : `${person.photoUrl}?v=${person.id}`
@@ -103,9 +65,7 @@ function PersonRow({ personId, role }: PersonRowProps) {
           <span className={styles.personRowInitials}>{ini}</span>
         )}
         {!person.isAlive && (
-          <span className={styles.personRowDeceased} aria-label={UI.deceased}>
-            †
-          </span>
+          <span className={styles.personRowDeceased} aria-label={t("deceased")}>†</span>
         )}
       </span>
       <span className={styles.personRowInfo}>
@@ -117,8 +77,6 @@ function PersonRow({ personId, role }: PersonRowProps) {
   );
 }
 
-// ─── Section ──────────────────────────────────────────────────────────────────
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className={styles.section}>
@@ -127,8 +85,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </section>
   );
 }
-
-// ─── DeleteConfirm ────────────────────────────────────────────────────────────
 
 function DeleteConfirm({
   personName,
@@ -139,14 +95,11 @@ function DeleteConfirm({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("panel");
   return (
     <div className={styles.deleteConfirm}>
       <p className={styles.deleteText}>
-        {UI.deleteConfirm(personName).split(personName).map((part, i) =>
-          i === 0
-            ? <span key={i}>{part}<strong>{personName}</strong></span>
-            : <span key={i}>{part}</span>
-        )}
+        {t("deleteConfirm", { name: personName })}
       </p>
       <div className={styles.deleteActions}>
         <button
@@ -154,21 +107,19 @@ function DeleteConfirm({
           onClick={onCancel}
           type="button"
         >
-          {UI.deleteCancel}
+          {t("deleteCancel")}
         </button>
         <button
           className={`${styles.btn} ${styles.btnDanger}`}
           onClick={onConfirm}
           type="button"
         >
-          {UI.deleteAction}
+          {t("deleteAction")}
         </button>
       </div>
     </div>
   );
 }
-
-// ─── Panel principal ──────────────────────────────────────────────────────────
 
 interface Props {
   nucleus?:     FamilyNucleus;
@@ -177,6 +128,8 @@ interface Props {
 }
 
 export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onClose }: Props) {
+  const t = useTranslations("panel");
+
   const { personId, coupleIds, parentIdsA, parentIdsB, childrenIds } = nucleus ?? {
     personId: "", coupleIds: null, parentIdsA: [], parentIdsB: [], childrenIds: [],
   };
@@ -184,16 +137,14 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
   const [mode, setMode] = useState<PanelMode>(initialMode);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-// ── Store ──────────────────────────────────────────────────────────────────
-  const persons = useFamilyStore((s) => s.familyData.persons);
+  const persons        = useFamilyStore((s) => s.familyData.persons);
   const clearSelection = useFamilyStore((s) => s.clearSelection);
-  const loadFamilyData  = useFamilyStore((s) => s.loadFamilyData);
-  const executeCommand  = useFamilyStore((s) => s.executeCommand);
+  const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
+  const executeCommand = useFamilyStore((s) => s.executeCommand);
   const clearHighlight = useTreeStore((s) => s.clearHighlight);
 
-  // ── Derivaciones ───────────────────────────────────────────────────────────
-  const person      = persons.find((p) => p.id === personId);
-  const partnerId   = coupleIds?.find((id) => id !== personId) ?? null;
+  const person        = persons.find((p) => p.id === personId);
+  const partnerId     = coupleIds?.find((id) => id !== personId) ?? null;
   const partnerPerson = partnerId ? persons.find((p) => p.id === partnerId) : null;
 
   const myParentIds    = !coupleIds ? parentIdsA
@@ -201,7 +152,6 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
   const inlawParentIds = !coupleIds ? []
     : personId === coupleIds[0] ? parentIdsB : parentIdsA;
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleClose = useCallback(() => {
     clearSelection();
     clearHighlight();
@@ -210,42 +160,34 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
   }, [clearSelection, clearHighlight]);
 
   async function handleDelete() {
-    const displayName = name;
     const { DeletePersonCommand } = await import("@/commands/DeletePersonCommand");
-    await executeCommand(new DeletePersonCommand(personId, displayName));
+    await executeCommand(new DeletePersonCommand(personId, name));
     handleClose();
   }
 
-// ── Render: modo create ───────────────────────────────────────────────────
   if (mode === "create") {
     return (
       <aside className={panelStyles.panel}>
-        <PanelHeader label={UI.labelCreate} title={UI.titleCreate}>
-          <IconButton onClick={() => onClose?.()} label={UI.btnClose} variant="close">✕</IconButton>
+        <PanelHeader label={t("labelCreate")} title={t("titleCreate")}>
+          <IconButton onClick={() => onClose?.()} label={t("btnClose")} variant="close">✕</IconButton>
         </PanelHeader>
         <div className={panelStyles.divider} />
         <div className={panelStyles.formWrapper}>
-          <PersonForm
-            mode="create"
-            onSuccess={() => onClose?.()}
-            onCancel={() => onClose?.()}
-          />
+          <PersonForm mode="create" onSuccess={() => onClose?.()} onCancel={() => onClose?.()} />
         </div>
       </aside>
     );
   }
 
-  // ── Guard — solo aplica a view y edit ─────────────────────────────────────
   if (!person) return null;
 
   const name = fullName(person);
 
-  // ── Render: modo edición ───────────────────────────────────────────────────────
   if (mode === "edit") {
     return (
       <aside className={panelStyles.panel}>
-        <PanelHeader label={UI.labelEdit} title={name}>
-          <IconButton onClick={() => setMode("view")} label={UI.btnCloseEdit} variant="close">✕</IconButton>
+        <PanelHeader label={t("labelEdit")} title={name}>
+          <IconButton onClick={() => setMode("view")} label={t("btnCloseEdit")} variant="close">✕</IconButton>
         </PanelHeader>
         <div className={panelStyles.divider} />
         <div className={panelStyles.formWrapper}>
@@ -260,109 +202,88 @@ export default function FamilyNucleusPanel({ nucleus, initialMode = "view", onCl
     );
   }
 
-  // ── Render: modo vista ─────────────────────────────────────────────────────
-return (
-  <aside className={panelStyles.panel}>
+  return (
+    <aside className={panelStyles.panel}>
+      <PanelHeader label={t("labelNucleus")} title={name}>
+        <IconButton onClick={() => { setMode("edit"); setShowDeleteConfirm(false); }} label={t("btnEdit")} title={t("btnEdit")}>✎</IconButton>
+        <IconButton onClick={() => setShowDeleteConfirm((v) => !v)} label={t("btnDelete")} title={t("btnDelete")} variant="danger">🗑</IconButton>
+        <IconButton onClick={handleClose} label={t("btnClose")} variant="close">✕</IconButton>
+      </PanelHeader>
 
-    <PanelHeader label={UI.labelNucleus} title={name}>
-      <IconButton
-        onClick={() => { setMode("edit"); setShowDeleteConfirm(false); }}
-        label={UI.btnEdit}
-        title={UI.btnEdit}
-      >✎</IconButton>
-      
-      <IconButton
-        onClick={() => setShowDeleteConfirm((v) => !v)}
-        label={UI.btnDelete}
-        title={UI.btnDelete}
-        variant="danger"
-      >🗑</IconButton>
+      <div className={panelStyles.divider} />
 
-      <IconButton
-        onClick={handleClose}
-        label={UI.btnClose}
-        variant="close"
-      >✕</IconButton>
-    </PanelHeader>
+      {showDeleteConfirm && (
+        <DeleteConfirm
+          personName={name}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
 
-    <div className={panelStyles.divider} />
+      <div className={styles.avatarSection}>
+        <AvatarUpload
+          personId={person.id}
+          firstName={person.firstName ?? ""}
+          lastName={person.lastName ?? ""}
+          currentPhotoUrl={person.photoUrl}
+        />
+      </div>
 
-    {showDeleteConfirm && (
-      <DeleteConfirm
-        personName={name}
-        onConfirm={handleDelete}
-        onCancel={() => setShowDeleteConfirm(false)}
-      />
-    )}
+      <div className={panelStyles.body}>
+        <Section title={t("sectionData")}>
+          <FieldRow label={t("fieldBirthPlace")} value={person.birthPlace ?? ""} />
+          <FieldRow label={t("fieldCity")}       value={person.city       ?? ""} />
+          <FieldRow label={t("fieldBirthDate")}  value={person.birthDate  ?? ""} />
+          {!person.isAlive && (
+            <FieldRow label={t("fieldDeathDate")} value={person.deathDate ?? ""} />
+          )}
+          {(person.nationalities?.length ?? 0) > 0 && (
+            <FieldRow label={t("fieldNationalities")} value={person.nationalities!.join(", ")} />
+          )}
+        </Section>
 
-    <div className={styles.avatarSection}>
-      <AvatarUpload
-        personId={person.id}
-        firstName={person.firstName ?? ""}
-        lastName={person.lastName ?? ""}
-        currentPhotoUrl={person.photoUrl}
-      />
-    </div>
-
-    <div className={panelStyles.body}>
-
-      <Section title={UI.sectionData}>
-        <FieldRow label={UI.fieldBirthPlace} value={person.birthPlace ?? ""} />
-        <FieldRow label={UI.fieldCity}       value={person.city       ?? ""} />
-        <FieldRow label={UI.fieldBirthDate}  value={person.birthDate  ?? ""} />
-        <FieldRow label={UI.fieldDeathDate}  value={person.deathDate  ?? ""} />
-        <FieldRow label={UI.fieldNationalities} value={person.nationalities!.join(", ")} />
-        {!person.isAlive && (
-          <FieldRow label={UI.fieldDeathDate}  value={person.deathDate  ?? ""} />
+        {person.history && (
+          <Section title={t("sectionHistory")}>
+            <p className={styles.history}>{person.history}</p>
+          </Section>
         )}
-        {(person.nationalities?.length ?? 0) > 0 && (
-          <FieldRow label={UI.fieldNationalities} value={person.nationalities!.join(", ")} />
+
+        {(person.customFields?.length ?? 0) > 0 && (
+          <Section title={t("sectionOther")}>
+            {person.customFields!.map((f) => (
+              <FieldRow key={f.key} label={f.label} value={f.value} />
+            ))}
+          </Section>
         )}
-      </Section>
 
-      {person.history && (
-        <Section title={UI.sectionHistory}>
-          <p className={styles.history}>{person.history}</p>
-        </Section>
-      )}
+        {partnerId && (
+          <Section title={t("sectionPartner")}>
+            <PersonRow personId={partnerId} role="partner" />
+          </Section>
+        )}
 
-      {(person.customFields?.length ?? 0) > 0 && (
-        <Section title={UI.sectionOther}>
-          {person.customFields!.map((f) => (
-            <FieldRow key={f.key} label={f.label} value={f.value} />
-          ))}
-        </Section>
-      )}
+        {myParentIds.length > 0 && (
+          <Section title={t("sectionParents")}>
+            {myParentIds.map((id) => <PersonRow key={id} personId={id} role="parent" />)}
+          </Section>
+        )}
 
-      {partnerId && (
-        <Section title={UI.sectionPartner}>
-          <PersonRow personId={partnerId} role="partner" />
-        </Section>
-      )}
+        {inlawParentIds.length > 0 && (
+          <Section title={t("sectionParentsOf", { name: partnerPerson?.firstName ?? t("partnerFallback") })}>
+            {inlawParentIds.map((id) => <PersonRow key={id} personId={id} role="inlaw" />)}
+          </Section>
+        )}
 
-      {myParentIds.length > 0 && (
-        <Section title={UI.sectionParents}>
-          {myParentIds.map((id) => <PersonRow key={id} personId={id} role="parent" />)}
-        </Section>
-      )}
+        {childrenIds.length > 0 && (
+          <Section title={t("sectionChildren")}>
+            {childrenIds.map((id) => <PersonRow key={id} personId={id} role="child" />)}
+          </Section>
+        )}
 
-      {inlawParentIds.length > 0 && (
-        <Section title={UI.sectionParentsOf(partnerPerson?.firstName ?? UI.partnerFallback)}>
-          {inlawParentIds.map((id) => <PersonRow key={id} personId={id} role="inlaw" />)}
-        </Section>
-      )}
-
-      {childrenIds.length > 0 && (
-        <Section title={UI.sectionChildren}>
-          {childrenIds.map((id) => <PersonRow key={id} personId={id} role="child" />)}
-        </Section>
-      )}
-
-      {!partnerId && myParentIds.length === 0 && inlawParentIds.length === 0 && childrenIds.length === 0 && (
-        <p className={styles.empty}>{UI.emptyRelations}</p>
-      )}
-
-    </div>
-  </aside>
-);
+        {!partnerId && myParentIds.length === 0 && inlawParentIds.length === 0 && childrenIds.length === 0 && (
+          <p className={styles.empty}>{t("emptyRelations")}</p>
+        )}
+      </div>
+    </aside>
+  );
 }

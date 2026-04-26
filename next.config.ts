@@ -1,7 +1,9 @@
-// worker-loader para ELK en Web Worker
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
-const nextConfig = {
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+const nextConfig: NextConfig = {
   reactCompiler: true,
   experimental: {
     serverActions: {
@@ -10,5 +12,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
-
+export default withNextIntl(nextConfig);

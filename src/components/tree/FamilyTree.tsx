@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveError } from "@/lib/errorMessages";
 import { useEffect, useState } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { Suspense, lazy } from "react";
@@ -8,19 +9,11 @@ import { useFamilyStore } from "@/store/useFamilyStore";
 import { useFamilyNucleus } from "@/hooks/useFamilyNucleus";
 import panelStyles from "@/components/ui/panel.module.css";
 import styles from "@/components/tree/FamilyTree.module.css";
+import { useTranslations } from "next-intl";
 
 const FamilyNucleusPanel = lazy(
   () => import("@/components/ui/FamilyNucleusPanel")
 );
-
-const UI = {
-  addPerson:      "Agregar persona",
-  addPersonTitle: "Agregar persona al árbol",
-  addBtn:         "+",
-  undoBtn:        "Deshacer",
-} as const;
-
-// ─── NucleusController ────────────────────────────────────────────────────────
 
 function NucleusController() {
   const selectedPersonId = useFamilyStore((s) => s.selectedPersonId);
@@ -33,8 +26,6 @@ function NucleusController() {
   );
 }
 
-// ─── PanelSkeleton ────────────────────────────────────────────────────────────
-
 function PanelSkeleton() {
   return (
     <aside className={panelStyles.skeleton} aria-hidden="true">
@@ -45,14 +36,15 @@ function PanelSkeleton() {
   );
 }
 
-// ─── FamilyTree ───────────────────────────────────────────────────────────────
-
 export default function FamilyTree() {
+  const t      = useTranslations("tree");
+  const tErrors = useTranslations("errors");
+
   const loadFamilyData   = useFamilyStore((s) => s.loadFamilyData);
   const error            = useFamilyStore((s) => s.error);
   const selectedPersonId = useFamilyStore((s) => s.selectedPersonId);
-  const canUndo          = useFamilyStore((s) => s.canUndo);  // ← aquí
-  const undo             = useFamilyStore((s) => s.undo);     // ← aquí
+  const canUndo          = useFamilyStore((s) => s.canUndo);
+  const undo             = useFamilyStore((s) => s.undo);
 
   const [showCreatePanel, setShowCreatePanel] = useState(false);
 
@@ -64,7 +56,7 @@ export default function FamilyTree() {
     if (selectedPersonId) setShowCreatePanel(false);
   }, [selectedPersonId]);
 
-  useEffect(() => {                                           // ← aquí
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
@@ -78,7 +70,7 @@ export default function FamilyTree() {
   if (error) {
     return (
       <div className={styles.error}>
-        <span>⚠ {error}</span>
+        <span>⚠ {resolveError(error, tErrors)}</span>
       </div>
     );
   }
@@ -109,8 +101,8 @@ export default function FamilyTree() {
           onClick={undo}
           disabled={!canUndo}
           type="button"
-          aria-label="Deshacer última acción"
-          title="Deshacer"
+          aria-label={t("undoAriaLabel")}
+          title={t("undoBtn")}
         >
           ⎌
         </button>
@@ -119,10 +111,10 @@ export default function FamilyTree() {
           className={styles.addBtn}
           onClick={() => setShowCreatePanel(true)}
           type="button"
-          aria-label={UI.addPersonTitle}
-          title={UI.addPerson}
+          aria-label={t("addPersonTitle")}
+          title={t("addPerson")}
         >
-          {UI.addBtn}
+          +
         </button>
 
       </div>

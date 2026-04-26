@@ -21,18 +21,6 @@ export const RELATIONSHIP_OPTIONS: RelationshipType[] = [
   "cousin_of",
 ];
 
-// ─── Labels de UI — en español por ahora, reemplazables por t() de next-intl
-
-export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
-  child_of:       "Hijo/a de",
-  parent_of:      "Padre/Madre de",
-  partner_of:     "Pareja de",
-  same_generation: "Misma generación que",
-  nephew_of:      "Sobrino/a de",
-  uncle_of:       "Tío/a de",
-  cousin_of:      "Primo/a de",
-};
-
 // ─── Delta de generación por tipo de relación ─────────────────────────────────
 
 const GENERATION_DELTA: Record<RelationshipType, number> = {

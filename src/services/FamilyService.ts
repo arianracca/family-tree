@@ -8,10 +8,9 @@ export { ValidationError, IntegrityError };
 // ─── Validación ───────────────────────────────────────────────────────────────
 
 export function validatePersonForm(data: PersonFormData): string | null {
-  if (!data.firstName.trim()) return "El Nombre es obligatorio.";
-  if (!data.lastName.trim())  return "El Apellido es obligatorio.";
-  if (data.generation === null)
-    return "Definí la generación usando el selector de relación.";
+  if (!data.firstName.trim()) return "ERR_FIRST_NAME_REQUIRED";
+  if (!data.lastName.trim())  return "ERR_LAST_NAME_REQUIRED";
+  if (data.generation === null) return "ERR_GENERATION_REQUIRED";
   return null;
 }
 
@@ -94,13 +93,13 @@ function validateIntegrity(
   allPersonIds: string[]
 ): void {
   if (formData.coupleId === personId) {
-    throw new IntegrityError("Una persona no puede ser pareja de sí misma.");
+    throw new IntegrityError("ERR_SELF_COUPLE");
   }
   if (formData.parentIds.includes(personId ?? "")) {
-    throw new IntegrityError("Una persona no puede ser su propio padre.");
+    throw new IntegrityError("ERR_SELF_PARENT");
   }
   if (formData.childrenIds.includes(personId ?? "")) {
-    throw new IntegrityError("Una persona no puede ser su propio hijo.");
+    throw new IntegrityError("ERR_SELF_CHILD");
   }
 
   const invalidIds = [
@@ -110,9 +109,7 @@ function validateIntegrity(
   ].filter((id) => !allPersonIds.includes(id));
 
   if (invalidIds.length > 0) {
-    throw new IntegrityError(
-      `Referencias a personas inexistentes: ${invalidIds.join(", ")}`
-    );
+    throw new IntegrityError("ERR_INVALID_REFERENCES" + ": " + invalidIds.join(", "));
   }
 }
 

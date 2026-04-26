@@ -23,11 +23,7 @@ import type { AppNode, AppEdge } from "@/types/graph";
 import CoupleEdge from "./edges/CoupleEdge";
 import type { EdgeTypes } from "@xyflow/react";
 import styles from "./TreeCanvas.module.css";
-
-const UI = {
-  loadingLabel: "Calculando árbol genealógico…",
-  errorLayout:  "Error al calcular el layout del árbol.",
-} as const;
+import { useTranslations } from "next-intl";
 
 const edgeTypes: EdgeTypes = {
   parentChild: ParentChildEdge,
@@ -40,6 +36,9 @@ const nodeTypes = {
 };
 
 function TreeCanvasInner() {
+  const t      = useTranslations("tree");
+  const tErrors = useTranslations("errors");
+
   const { fitView }  = useReactFlow();
   const hasAutoFit   = useRef(false);
 
@@ -53,8 +52,6 @@ function TreeCanvasInner() {
   const selectPerson   = useFamilyStore((s) => s.selectPerson);
   const clearSelection = useFamilyStore((s) => s.clearSelection);
 
-  // ── Estrategia de layout inyectada aquí ───────────────────────────────────
-  // Para cambiar el algoritmo (ej: circular), basta con pasar otra estrategia.
   useLayout(elkLayoutStrategy);
 
   useEffect(() => {
@@ -91,7 +88,7 @@ function TreeCanvasInner() {
     return (
       <div className={styles.errorState}>
         <span className={styles.errorIcon}>⚠</span>
-        <p className={styles.errorMessage}>{UI.errorLayout}</p>
+        <p className={styles.errorMessage}>{tErrors("errorLayout")}</p>
       </div>
     );
   }
@@ -99,9 +96,9 @@ function TreeCanvasInner() {
   return (
     <div className={styles.canvas}>
       {layoutStatus === "loading" && (
-        <div className={styles.loading} aria-label={UI.loadingLabel}>
+        <div className={styles.loading} aria-label={t("loadingLabel")}>
           <div className={styles.spinner} />
-          <span className={styles.loadingLabel}>{UI.loadingLabel}</span>
+          <span className={styles.loadingLabel}>{t("loadingLabel")}</span>
         </div>
       )}
 

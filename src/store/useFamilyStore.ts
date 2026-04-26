@@ -4,10 +4,6 @@ import { activeRepository } from "@/lib/familyRepository";
 import type { FamilyData, Person, Relation } from "@/types/family";
 import type { FamilyCommand } from "@/commands/FamilyCommand";
 
-const UI = {
-  errorData: "Error al cargar los datos.",
-} as const;
-
 // ─── Tamaño máximo de la pila de undo ────────────────────────────────────────
 const MAX_UNDO_STACK = 50;
 
@@ -65,7 +61,7 @@ export const useFamilyStore = create<FamilyState>()(
         set((state) => { state.familyData = data; state.isLoading = false; });
       } catch (err) {
         set((state) => {
-          state.error = err instanceof Error ? err.message : UI.errorData;
+          state.error = err instanceof Error ? err.message : "ERR_FETCH_DATA";
           state.isLoading = false;
         });
       }

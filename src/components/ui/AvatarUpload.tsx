@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import styles from "./AvatarUpload.module.css";
+import { useTranslations } from "next-intl";
 
 interface Props {
   personId:         string;
@@ -13,27 +14,14 @@ interface Props {
 
 type UploadStatus = "idle" | "uploading" | "success" | "error";
 
-const UI = {
-  avatar:       "Avatar",
-  idle:         "Cambiar foto",
-  uploading:    "Subiendo…",
-  success:      "✓ Guardado",
-  ariaUpload:   "Subir foto de perfil",
-  ariaChange:   "Cambiar foto de perfil",
-  ariaRemove:   "Eliminar foto de perfil",
-  titleRemove:  "Eliminar foto",
-  unknownError: "Error desconocido",
-  uploadError:  "Error al subir la foto",
-  deleteError:  "Error al eliminar la foto",
-  error:        "Error",
-} as const;
-
 export default function AvatarUpload({
   personId,
   firstName,
   lastName,
   currentPhotoUrl,
 }: Props) {
+  const t = useTranslations("avatar");
+
   const inputRef                = useRef<HTMLInputElement>(null);
   const [status, setStatus]     = useState<UploadStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -52,7 +40,6 @@ export default function AvatarUpload({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Preview local inmediato — se revierte si el comando falla
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -72,7 +59,7 @@ export default function AvatarUpload({
       setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : UI.uploadError);
+      setErrorMsg(err instanceof Error ? err.message : "ERR_UPLOAD_AVATAR");
       setPreview(currentPhotoUrl ?? null);
       resetInput();
     }
@@ -91,7 +78,7 @@ export default function AvatarUpload({
       setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : UI.deleteError);
+      setErrorMsg(err instanceof Error ? err.message : "ERR_DELETE_AVATAR");
     }
   }
 
@@ -106,7 +93,7 @@ export default function AvatarUpload({
         onChange={handleFileChange}
         disabled={isUploading}
         style={{ display: "none" }}
-        aria-label={UI.ariaUpload}
+        aria-label={t("ariaUpload")}
       />
 
       <button
@@ -114,11 +101,11 @@ export default function AvatarUpload({
         onClick={() => inputRef.current?.click()}
         disabled={isUploading}
         type="button"
-        aria-label={UI.ariaChange}
+        aria-label={t("ariaChange")}
       >
         <div className={styles.avatar}>
           {preview ? (
-            <img src={preview} alt={UI.avatar} className={styles.img} />
+            <img src={preview} alt={t("label")} className={styles.img} />
           ) : (
             <span className={styles.placeholder}>
               {(firstName ?? "?").charAt(0).toUpperCase()}
@@ -139,16 +126,16 @@ export default function AvatarUpload({
           className={styles.removeBtn}
           onClick={handleRemoveAvatar}
           type="button"
-          aria-label={UI.ariaRemove}
-          title={UI.titleRemove}
+          aria-label={t("ariaRemove")}
+          title={t("titleRemove")}
         >×</button>
       )}
 
       <div className={styles.status} data-status={status}>
-        {status === "idle"      && UI.idle}
-        {status === "uploading" && UI.uploading}
-        {status === "success"   && UI.success}
-        {status === "error"     && (errorMsg ?? UI.error)}
+        {status === "idle"      && t("idle")}
+        {status === "uploading" && t("uploading")}
+        {status === "success"   && t("success")}
+        {status === "error"     && (errorMsg ?? t("error"))}
       </div>
     </div>
   );

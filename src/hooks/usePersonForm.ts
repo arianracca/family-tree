@@ -1,18 +1,10 @@
+"use client";
+
 import { useState, useCallback } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
-import { ValidationError, IntegrityError } from "@/services/FamilyErrors";
+import { resolveError } from "@/lib/errorMessages";
+import { useTranslations } from "next-intl";
 import type { Person, Relation, CustomField, CoupleRelation, ParentChildRelation } from "@/types/family";
-
-// ─── UI strings ───────────────────────────────────────────────────────────────
-
-const UI = {
-  errorFirstName:  "El Nombre es obligatorio.",
-  errorLastName:   "El Apellido es obligatorio.",
-  errorGeneration: "Definí la generación usando el selector de relación.",
-  errorSave:       "Error al guardar.",
-} as const;
-
-// ─── Tipos públicos ───────────────────────────────────────────────────────────
 
 export interface PersonFormData {
   firstName:      string;
@@ -52,8 +44,6 @@ export interface UsePersonFormReturn {
   submit:            () => Promise<void>;
   reset:             () => void;
 }
-
-// ─── Builders de estado inicial ───────────────────────────────────────────────
 
 export function emptyFormData(): PersonFormData {
   return {
@@ -111,8 +101,6 @@ export function personToFormData(
   };
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 interface UsePersonFormOptions {
   mode:       FormMode;
   personId?:  string;
@@ -125,9 +113,9 @@ export function usePersonForm({
   onSuccess,
 }: UsePersonFormOptions): UsePersonFormReturn {
 
+  const tErrors = useTranslations("errors");
   const loadFamilyData = useFamilyStore((s) => s.loadFamilyData);
 
-  // ── Estado inicial — lectura imperativa del store ────────────────────────
   const buildInitial = useCallback((): PersonFormData => {
     if (mode === "edit" && personId) {
       const { persons, relations } = useFamilyStore.getState().familyData;
@@ -140,8 +128,6 @@ export function usePersonForm({
   const [formData,     setFormData]     = useState<PersonFormData>(buildInitial);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error,        setError]        = useState<string | null>(null);
-
-  // ── Setters de campos ────────────────────────────────────────────────────
 
   const setField = useCallback(
     <K extends keyof PersonFormData>(key: K, value: PersonFormData[K]) => {
@@ -192,8 +178,6 @@ export function usePersonForm({
     })), []
   );
 
-// ── Submit — ejecuta vía Command Pattern para habilitar undo ────────────
-
   const submit = useCallback(async () => {
     setIsSubmitting(true);
     setError(null);
@@ -222,17 +206,11 @@ export function usePersonForm({
       onSuccess?.();
 
     } catch (err) {
-      if (err instanceof ValidationError || err instanceof IntegrityError) {
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : UI.errorSave);
-      }
+      setError(resolveError(err, tErrors));
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, mode, personId, onSuccess]);
-
-  // ── Reset ────────────────────────────────────────────────────────────────
+  }, [formData, mode, personId, onSuccess, tErrors]);
 
   const reset = useCallback(() => {
     setFormData(buildInitial());

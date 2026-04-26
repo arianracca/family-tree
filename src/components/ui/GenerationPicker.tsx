@@ -1,42 +1,29 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import {
   type RelationshipType,
   RELATIONSHIP_OPTIONS,
-  RELATIONSHIP_LABELS,
   resolveGeneration,
 } from "@/lib/generationUtils";
 import styles from "./GenerationPicker.module.css";
-
-const UI = {
-  label:            "Generación",
-  choosePersonHint: "— elegir persona —",
-  calculatedLabel:  "Generación calculada:",
-  referenceHint:    "Seleccioná una persona de referencia",
-  calcError:        "No se pudo calcular la generación.",
-} as const;
-
-// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   onGenerationResolved: (generation: number) => void;
   currentGeneration?:   number | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function getFullName(p: { firstName: string; lastName: string }): string {
   return `${p.firstName} ${p.lastName}`;
 }
-
-// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function GenerationPicker({
   onGenerationResolved,
   currentGeneration,
 }: Props) {
+  const t = useTranslations("generation");
   const persons = useFamilyStore((s) => s.familyData.persons);
 
   const [referenceId,  setReferenceId]  = useState<string>("");
@@ -44,23 +31,18 @@ export default function GenerationPicker({
   const [resolved,     setResolved]     = useState<number | null>(currentGeneration ?? null);
   const [error,        setError]        = useState<string | null>(null);
 
-  // ── Recalcular cuando cambia referencia o relación ────────────────────────
-
   function handleResolve(refId: string, rel: RelationshipType) {
     if (!refId) {
       setResolved(null);
       setError(null);
       return;
     }
-
     const result = resolveGeneration(refId, rel, persons);
-
     if (result === null) {
-      setError(UI.calcError);
+      setError(t("calcError"));
       setResolved(null);
       return;
     }
-
     setError(null);
     setResolved(result);
     onGenerationResolved(result);
@@ -78,11 +60,9 @@ export default function GenerationPicker({
     handleResolve(referenceId, rel);
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
     <div className={styles.picker}>
-      <label className={styles.label}>{UI.label}</label>
+      <label className={styles.label}>{t("label")}</label>
 
       <div className={styles.row}>
         <select
@@ -92,7 +72,7 @@ export default function GenerationPicker({
         >
           {RELATIONSHIP_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>
-              {RELATIONSHIP_LABELS[opt]}
+              {t(opt)}
             </option>
           ))}
         </select>
@@ -102,7 +82,7 @@ export default function GenerationPicker({
           value={referenceId}
           onChange={handleReferenceChange}
         >
-          <option value="">{UI.choosePersonHint}</option>
+          <option value="">{t("choosePersonHint")}</option>
           {persons.map((p) => (
             <option key={p.id} value={p.id}>
               {getFullName(p)}
@@ -117,13 +97,11 @@ export default function GenerationPicker({
       >
         {resolved !== null ? (
           <>
-            <span className={styles.resultLabel}>{UI.calculatedLabel}</span>
+            <span className={styles.resultLabel}>{t("calculatedLabel")}</span>
             <span className={styles.resultValue}>{resolved}</span>
           </>
         ) : (
-          <span className={styles.resultHint}>
-            {UI.referenceHint}
-          </span>
+          <span className={styles.resultHint}>{t("referenceHint")}</span>
         )}
       </div>
 

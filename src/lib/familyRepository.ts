@@ -1,14 +1,5 @@
 import type { FamilyData, Person, Relation } from "@/types/family";
 
-const UI = {
-  errorData:       "Error al cargar los datos.",
-  errorCreate:     "Error al crear la persona.",
-  errorUpdate:     "Error al actualizar la persona.",
-  errorDelete:     "Error al eliminar la persona.",
-  errorAddRel:     "Error al agregar la relación.",
-  errorRemoveRel:  "Error al eliminar la relación.",
-} as const;
-
 // ─── Contrato ─────────────────────────────────────────────────────────────────
 // Cuando llegue el backend REST, creás restRepository implementando
 // esta misma interfaz y lo enchufás en activeRepository. Nada más cambia.
@@ -29,7 +20,7 @@ export interface FamilyRepository {
 const apiRepository: FamilyRepository = {
   getAll: async () => {
     const res = await fetch("/api/family", { cache: "no-store" });
-    if (!res.ok) throw new Error(UI.errorData);
+    if (!res.ok) throw new Error("ERR_FETCH_DATA");
     return res.json();
   },
 
@@ -39,7 +30,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(UI.errorCreate);
+    if (!res.ok) throw new Error("ERR_CREATE_PERSON");
     return res.json();
   },
 
@@ -49,7 +40,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id, ...updates }),
     });
-    if (!res.ok) throw new Error(UI.errorUpdate);
+    if (!res.ok) throw new Error("ERR_UPDATE_PERSON");
     return res.json();
   },
 
@@ -59,7 +50,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ id }),
     });
-    if (!res.ok) throw new Error(UI.errorDelete);
+    if (!res.ok) throw new Error("ERR_DELETE_PERSON");
   },
 
   addRelation: async (relation) => {
@@ -68,7 +59,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error(UI.errorAddRel);
+    if (!res.ok) throw new Error("ERR_ADD_RELATION");
   },
 
   removeRelation: async (relation) => {
@@ -77,7 +68,7 @@ const apiRepository: FamilyRepository = {
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(relation),
     });
-    if (!res.ok) throw new Error(UI.errorRemoveRel);
+    if (!res.ok) throw new Error("ERR_REMOVE_RELATION");
   },
 
   uploadAvatar: async (personId, firstName, lastName, file) => {
@@ -89,7 +80,7 @@ const apiRepository: FamilyRepository = {
 
     const res  = await fetch("/api/upload-avatar", { method: "POST", body: formData });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Error al subir el avatar.");
+    if (!res.ok) throw new Error(json.error ?? "ERR_UPLOAD_AVATAR");
     return json.photoUrl as string;
   },
 
@@ -100,7 +91,7 @@ const apiRepository: FamilyRepository = {
       body:    JSON.stringify({ personId }),
     });
     const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Error al eliminar el avatar.");
+    if (!res.ok) throw new Error(json.error ?? "ERR_DELETE_AVATAR");
     return json.previousPhotoUrl as string | null;
   },
 };
